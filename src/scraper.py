@@ -13,33 +13,47 @@ logger = logging.getLogger(__name__)
 @retry(max_attempts=3, delay=2)
 def scrape_url_with_bash(url: str) -> Dict[str, str]:
     """Uses existing firecrawl bash script"""
+    logger.debug(f"[DEBUG] Starting bash scraping for URL: {url}")
     script_path = os.getenv("FIRECRAWL_SCRIPT_PATH")
+    logger.debug(f"[DEBUG] Firecrawl script path: {script_path}")
+
     if not script_path or not os.path.exists(script_path):
+        logger.error(f"[DEBUG] Firecrawl script not found at: {script_path}")
         raise ValueError(f"Firecrawl script not found at: {script_path}")
-    
+
     try:
+        logger.debug(f"[DEBUG] Executing bash script...")
         result = subprocess.run(
             [script_path, url],
             capture_output=True,
             text=True,
             timeout=60
         )
+        logger.debug(f"[DEBUG] Script return code: {result.returncode}")
+        logger.debug(f"[DEBUG] Script stdout length: {len(result.stdout)}")
+        logger.debug(f"[DEBUG] Script stderr: {result.stderr[:500] if result.stderr else 'None'}")
+
         if result.returncode != 0:
+            logger.error(f"[DEBUG] Firecrawl script failed with return code {result.returncode}")
             raise Exception(f"Firecrawl failed: {result.stderr}")
 
         # Extract title from content or use URL as fallback
         content = result.stdout
         title = url.split('/')[-1] if not content else "Untitled"
-        
+        logger.debug(f"[DEBUG] Content length: {len(content)}")
+        logger.debug(f"[DEBUG] Extracted title: {title}")
+
         return {
             'content': content,
             'title': title,
             'url': url
         }
     except subprocess.TimeoutExpired:
+        logger.error(f"[DEBUG] Timeout while scraping {url}")
         raise Exception(f"Timeout while scraping {url}")
     except Exception as e:
-        logger.error(f"Error scraping {url}: {str(e)}")
+        logger.error(f"[DEBUG] Error scraping {url}: {str(e)}")
+        logger.debug(f"[DEBUG] Bash scraping error type: {type(e).__name__}")
         raise
 
 @retry(max_attempts=3, delay=2)
@@ -172,20 +186,38 @@ def scrape_url(url: str, method: Optional[str] = None) -> Dict[str, str]:
     Returns:
         Dictionary with content, title, and url
     """
+    logger.debug(f"[DEBUG] Starting URL scraping")
+    logger.debug(f"[DEBUG] URL: {url}")
+    logger.debug(f"[DEBUG] Method: {method or 'auto'}")
+
     if method == 'bash':
+        logger.debug(f"[DEBUG] Using bash method only")
         return scrape_url_with_bash(url)
     elif method == 'python':
+        logger.debug(f"[DEBUG] Using python method only")
         return scrape_url_with_python(url)
     elif method == 'requests':
+        logger.debug(f"[DEBUG] Using requests method only")
         return scrape_url_with_requests(url)
     else:
         # Try bash first, then python, then requests as fallback
+        logger.debug(f"[DEBUG] Trying bash method first")
         try:
-            return scrape_url_with_bash(url)
+            result = scrape_url_with_bash(url)
+            logger.debug(f"[DEBUG] Bash method succeeded")
+            return result
         except Exception as e:
             logger.warning(f"Bash method failed: {e}. Trying Python method...")
+            logger.debug(f"[DEBUG] Bash method error details: {type(e).__name__}: {str(e)}")
             try:
-                return scrape_url_with_python(url)
+                logger.debug(f"[DEBUG] Trying python method")
+                result = scrape_url_with_python(url)
+                logger.debug(f"[DEBUG] Python method succeeded")
+                return result
             except Exception as e2:
                 logger.warning(f"Python method failed: {e2}. Using requests fallback...")
-                return scrape_url_with_requests(url)
+                logger.debug(f"[DEBUG] Python method error details: {type(e2).__name__}: {str(e2)}")
+                logger.debug(f"[DEBUG] Using requests fallback method")
+                result = scrape_url_with_requests(url)
+                logger.debug(f"[DEBUG] Requests fallback method succeeded")
+                return result

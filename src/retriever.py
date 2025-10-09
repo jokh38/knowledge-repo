@@ -9,6 +9,7 @@ from pathlib import Path
 import logging
 from typing import Dict, List, Optional
 from utils.retry import retry
+from src.custom_llm import LlamaCppLLM
 
 logger = logging.getLogger(__name__)
 
@@ -19,17 +20,49 @@ if not VAULT_PATH:
 
 DB_PATH = os.getenv("CHROMA_DB_PATH", "./chroma_db")
 
-# LLM Settings - Using Qwen3-Coder-30B model
-Settings.llm = Ollama(
-    model="Qwen3-Coder-30B",
-    request_timeout=120.0,
-    base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-)
+# LLM Settings - Using custom LLM for llama.cpp compatibility
+base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+logger.debug(f"[DEBUG] Initializing LLM with base URL: {base_url}")
+logger.debug(f"[DEBUG] Request timeout: 120.0s")
+
+# Check if this is a llama.cpp server (port 8080) or standard Ollama (port 11434)
+if base_url.endswith(":8080"):
+    logger.debug(f"[DEBUG] Detected llama.cpp server, using custom LLM implementation")
+    Settings.llm = LlamaCppLLM(
+        model_name="Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_XL.gguf",
+        base_url=base_url,
+        temperature=0.3,
+        timeout=120.0
+    )
+    logger.debug(f"[DEBUG] LlamaCppLLM initialized successfully")
+else:
+    logger.debug(f"[DEBUG] Detected standard Ollama server, using Ollama client")
+    Settings.llm = Ollama(
+        model="Qwen3-Coder-30B",
+        request_timeout=120.0,
+        base_url=base_url
+    )
+    logger.debug(f"[DEBUG] LlamaIndex Ollama LLM initialized successfully")
 
 # Embedding Model - using lighter multilingual model
-Settings.embed_model = HuggingFaceEmbedding(
-    model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-)
+logger.debug(f"[DEBUG] Initializing embedding model")
+try:
+    Settings.embed_model = HuggingFaceEmbedding(
+        model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    )
+    logger.debug(f"[DEBUG] Embedding model initialized successfully")
+except Exception as e:
+    logger.error(f"[DEBUG] Failed to initialize primary embedding model: {str(e)}")
+    logger.debug(f"[DEBUG] Trying fallback embedding model...")
+    try:
+        # Try a simpler model as fallback
+        Settings.embed_model = HuggingFaceEmbedding(
+            model_name="all-MiniLM-L6-v2"
+        )
+        logger.debug(f"[DEBUG] Fallback embedding model initialized successfully")
+    except Exception as e2:
+        logger.error(f"[DEBUG] All embedding models failed: {str(e2)}")
+        raise Exception(f"Could not initialize any embedding model. Primary error: {str(e)}, Fallback error: {str(e2)}")
 
 @retry(max_attempts=3, delay=2)
 def get_vector_store():
@@ -97,36 +130,65 @@ def index_vault(force_reindex: bool = False):
 @retry(max_attempts=2, delay=1)
 def query_vault(query_text: str, top_k: int = 5):
     """Query the indexed vault"""
+    logger.debug(f"[DEBUG] Starting vault query")
+    logger.debug(f"[DEBUG] Query text: {query_text}")
+    logger.debug(f"[DEBUG] Top_k: {top_k}")
 
     try:
+        logger.debug(f"[DEBUG] Getting vector store")
         vector_store = get_vector_store()
+        logger.debug(f"[DEBUG] Creating VectorStoreIndex from vector store")
         index = VectorStoreIndex.from_vector_store(vector_store)
 
         # Create query engine
+        logger.debug(f"[DEBUG] Creating query engine with similarity_top_k={top_k}, response_mode='compact'")
         query_engine = index.as_query_engine(
             similarity_top_k=top_k,
             response_mode="compact"
         )
+        logger.debug(f"[DEBUG] Query engine created successfully")
 
+        logger.debug(f"[DEBUG] Executing query...")
         response = query_engine.query(query_text)
+        logger.debug(f"[DEBUG] Query response received")
+        logger.debug(f"[DEBUG] Response type: {type(response)}")
+        logger.debug(f"[DEBUG] Response attributes: {dir(response)}")
 
         # Extract source information
         sources = []
-        for node in response.source_nodes:
-            source_info = {
-                'file_path': node.metadata.get('file_name', 'Unknown'),
-                'score': node.score if hasattr(node, 'score') else None,
-                'content_preview': node.text[:200] + "..." if len(node.text) > 200 else node.text
-            }
-            sources.append(source_info)
+        logger.debug(f"[DEBUG] Processing source nodes...")
+        if hasattr(response, 'source_nodes'):
+            logger.debug(f"[DEBUG] Found {len(response.source_nodes)} source nodes")
+            for i, node in enumerate(response.source_nodes):
+                logger.debug(f"[DEBUG] Processing source node {i+1}")
+                logger.debug(f"[DEBUG] Node metadata: {node.metadata}")
+                if hasattr(node, 'score'):
+                    logger.debug(f"[DEBUG] Node score: {node.score}")
+                logger.debug(f"[DEBUG] Node text length: {len(node.text)}")
+
+                source_info = {
+                    'file_path': node.metadata.get('file_name', 'Unknown'),
+                    'score': node.score if hasattr(node, 'score') else None,
+                    'content_preview': node.text[:200] + "..." if len(node.text) > 200 else node.text
+                }
+                sources.append(source_info)
+        else:
+            logger.debug(f"[DEBUG] No source_nodes attribute found in response")
+
+        answer = str(response)
+        logger.debug(f"[DEBUG] Final answer length: {len(answer)} characters")
+        logger.debug(f"[DEBUG] Number of sources: {len(sources)}")
 
         return {
-            'answer': str(response),
+            'answer': answer,
             'sources': sources,
             'query': query_text
         }
     except Exception as e:
-        logger.error(f"Error querying vault: {str(e)}")
+        logger.error(f"[DEBUG] Error querying vault: {str(e)}")
+        logger.error(f"[DEBUG] Exception type: {type(e).__name__}")
+        import traceback
+        logger.debug(f"[DEBUG] Full traceback: {traceback.format_exc()}")
         raise
 
 @retry(max_attempts=2, delay=1)

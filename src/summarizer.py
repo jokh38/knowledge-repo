@@ -12,9 +12,12 @@ def _ollama_chat_via_request(prompt: str, model: str = 'Qwen3-Coder-30B', temper
     """Fallback Ollama chat using direct HTTP request"""
     try:
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        logger.debug(f"[DEBUG] Starting Ollama chat request to {base_url} with model {model}")
+        logger.debug(f"[DEBUG] Prompt length: {len(prompt)} characters")
 
         # Try OpenAI-compatible endpoint first
         api_url = f"{base_url}/v1/chat/completions"
+        logger.debug(f"[DEBUG] Trying OpenAI-compatible endpoint: {api_url}")
 
         payload = {
             "model": model,
@@ -23,13 +26,19 @@ def _ollama_chat_via_request(prompt: str, model: str = 'Qwen3-Coder-30B', temper
             ],
             "temperature": temperature
         }
+        logger.debug(f"[DEBUG] Request payload: {payload}")
 
         response = requests.post(api_url, json=payload, timeout=60)
+        logger.debug(f"[DEBUG] OpenAI endpoint response status: {response.status_code}")
+        logger.debug(f"[DEBUG] OpenAI endpoint response headers: {dict(response.headers)}")
 
         # If OpenAI endpoint fails, try native Ollama endpoint
         if response.status_code != 200:
             logger.warning(f"OpenAI endpoint failed: {response.status_code}, trying native Ollama endpoint...")
+            logger.debug(f"[DEBUG] OpenAI endpoint response text: {response.text[:500]}...")
+
             api_url = f"{base_url}/api/chat"
+            logger.debug(f"[DEBUG] Trying native Ollama endpoint: {api_url}")
             payload = {
                 "model": model,
                 "messages": [
@@ -37,45 +46,71 @@ def _ollama_chat_via_request(prompt: str, model: str = 'Qwen3-Coder-30B', temper
                 ],
                 "stream": False
             }
+            logger.debug(f"[DEBUG] Native Ollama payload: {payload}")
+
             response = requests.post(api_url, json=payload, timeout=60)
+            logger.debug(f"[DEBUG] Native Ollama response status: {response.status_code}")
+            logger.debug(f"[DEBUG] Native Ollama response headers: {dict(response.headers)}")
 
         response.raise_for_status()
         data = response.json()
+        logger.debug(f"[DEBUG] Response data structure: {type(data)}")
+        logger.debug(f"[DEBUG] Response data keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
+        logger.debug(f"[DEBUG] Full response data: {data}")
 
         # Handle OpenAI-like format
         if 'choices' in data and data['choices']:
+            logger.debug(f"[DEBUG] Found 'choices' field with {len(data['choices'])} items")
             choice = data['choices'][0]
+            logger.debug(f"[DEBUG] First choice keys: {list(choice.keys()) if isinstance(choice, dict) else 'Not a dict'}")
+
             if 'message' in choice and 'content' in choice['message']:
-                return choice['message']['content']
+                content = choice['message']['content']
+                logger.debug(f"[DEBUG] Extracted content from choice.message.content: {len(content)} chars")
+                return content
             elif 'text' in choice:  # Alternative format
-                return choice['text']
+                content = choice['text']
+                logger.debug(f"[DEBUG] Extracted content from choice.text: {len(content)} chars")
+                return content
 
         # Handle native Ollama format
         if 'message' in data and data['message']:
+            logger.debug(f"[DEBUG] Found 'message' field in response")
             if 'content' in data['message']:
-                return data['message']['content']
+                content = data['message']['content']
+                logger.debug(f"[DEBUG] Extracted content from message.content: {len(content)} chars")
+                return content
 
         # Handle llama.cpp specific format
         if 'content' in data:
-            return data['content']
+            content = data['content']
+            logger.debug(f"[DEBUG] Extracted content from root content field: {len(content)} chars")
+            return content
 
         # Try to extract content from response text directly
         if 'response' in data:
-            return data['response']
+            content = data['response']
+            logger.debug(f"[DEBUG] Extracted content from response field: {len(content)} chars")
+            return content
 
-        logger.error(f"Response format: {data}")
+        logger.error(f"[DEBUG] Could not extract content from response. Available fields: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
+        logger.error(f"[DEBUG] Full response data: {data}")
         raise ValueError(f"Unexpected response format: {data}")
 
     except Exception as e:
-        logger.error(f"Error in fallback Ollama request: {str(e)}")
+        logger.error(f"[DEBUG] Error in fallback Ollama request: {str(e)}")
+        logger.error(f"[DEBUG] Exception type: {type(e).__name__}")
         raise
 
 @retry(max_attempts=3, delay=2)
 def summarize_content(content: str, max_length: int = 4000) -> Dict[str, str]:
     """Summarize web content using local LLM"""
+    logger.debug(f"[DEBUG] Starting content summarization")
+    logger.debug(f"[DEBUG] Original content length: {len(content)} characters")
 
     # Truncate long content
     truncated = content[:max_length]
+    logger.debug(f"[DEBUG] Truncated content length: {len(truncated)} characters")
 
     prompt = f"""다음 웹 콘텐츠를 분석하여:
 1. 핵심 내용을 3-5개 불렛 포인트로 요약
@@ -95,71 +130,105 @@ def summarize_content(content: str, max_length: int = 4000) -> Dict[str, str]:
 ## 카테고리
 [카테고리]
 """
+    logger.debug(f"[DEBUG] Generated prompt length: {len(prompt)} characters")
 
     try:
         # Use direct HTTP request for llama.cpp server compatibility
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        logger.debug(f"[DEBUG] Using base URL: {base_url}")
 
         # Check if this is a llama.cpp server (OpenAI-compatible)
         if base_url.endswith(":8080"):
+            logger.debug(f"[DEBUG] Detected llama.cpp server, using specific model")
             content = _ollama_chat_via_request(prompt, 'Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_XL.gguf', 0.3)
             return {
                 'summary': content,
                 'model': 'Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_XL.gguf'
             }
         else:
+            logger.debug(f"[DEBUG] Using standard Ollama server")
             # Try fallback HTTP request method first to avoid Ollama client issues
             try:
+                logger.debug(f"[DEBUG] Trying HTTP fallback method first")
                 content = _ollama_chat_via_request(prompt, 'Qwen3-Coder-30B', 0.3)
+                logger.debug(f"[DEBUG] HTTP fallback successful, got {len(content)} characters")
                 return {
                     'summary': content,
                     'model': 'Qwen3-Coder-30B'
                 }
             except Exception as fallback_error:
                 logger.warning(f"Fallback HTTP request failed: {fallback_error}. Trying Ollama client...")
+                logger.debug(f"[DEBUG] Fallback error details: {type(fallback_error).__name__}: {str(fallback_error)}")
+
                 # Try Ollama client as last resort
                 try:
+                    logger.debug(f"[DEBUG] Initializing Ollama client")
                     client = ollama.Client(host=base_url)
+                    logger.debug(f"[DEBUG] Sending chat request via Ollama client")
+
                     response = client.chat(
                         model='Qwen3-Coder-30B',
                         messages=[{'role': 'user', 'content': prompt}],
                         options={'temperature': 0.3}
                     )
+                    logger.debug(f"[DEBUG] Ollama client response received")
+                    logger.debug(f"[DEBUG] Response type: {type(response)}")
+                    logger.debug(f"[DEBUG] Response attributes: {dir(response)}")
 
                     # Handle different response formats
                     content = None
                     if hasattr(response, 'message') and response.message:
-                        content = response.message.content
+                        logger.debug(f"[DEBUG] Found response.message attribute")
+                        logger.debug(f"[DEBUG] Message type: {type(response.message)}")
+                        if hasattr(response.message, 'content'):
+                            content = response.message.content
+                            logger.debug(f"[DEBUG] Extracted content from response.message.content: {len(content)} chars")
                     elif isinstance(response, dict):
+                        logger.debug(f"[DEBUG] Response is a dict with keys: {list(response.keys())}")
                         # Try OpenAI-like format first
                         if 'choices' in response and response['choices']:
+                            logger.debug(f"[DEBUG] Found 'choices' field with {len(response['choices'])} items")
                             choice = response['choices'][0]
+                            logger.debug(f"[DEBUG] First choice keys: {list(choice.keys()) if isinstance(choice, dict) else 'Not a dict'}")
                             if 'message' in choice:
                                 content = choice['message'].get('content')
+                                logger.debug(f"[DEBUG] Extracted content from choice.message.content: {len(content) if content else 0} chars")
                             elif 'text' in choice:
                                 content = choice['text']
+                                logger.debug(f"[DEBUG] Extracted content from choice.text: {len(content) if content else 0} chars")
                         # Try original Ollama format
                         elif 'message' in response and response['message']:
+                            logger.debug(f"[DEBUG] Found 'message' field in response dict")
                             content = response['message'].get('content')
+                            logger.debug(f"[DEBUG] Extracted content from message.content: {len(content) if content else 0} chars")
                         # Try llama.cpp format
                         elif 'content' in response:
                             content = response['content']
+                            logger.debug(f"[DEBUG] Extracted content from root content field: {len(content) if content else 0} chars")
                         elif 'response' in response:
                             content = response['response']
+                            logger.debug(f"[DEBUG] Extracted content from response field: {len(content) if content else 0} chars")
 
                     if not content:
-                        logger.error(f"Response format: {response}")
+                        logger.error(f"[DEBUG] Unable to extract content from response")
+                        logger.error(f"[DEBUG] Full response: {response}")
+                        logger.error(f"[DEBUG] Response type: {type(response)}")
+                        if isinstance(response, dict):
+                            logger.error(f"[DEBUG] Response keys: {list(response.keys())}")
                         raise ValueError(f"Unable to extract content from response: {response}")
 
+                    logger.debug(f"[DEBUG] Successfully extracted content: {len(content)} characters")
                     return {
                         'summary': content,
                         'model': 'Qwen3-Coder-30B'
                     }
                 except Exception as ollama_error:
                     logger.error(f"Ollama client failed: {str(ollama_error)}")
+                    logger.debug(f"[DEBUG] Ollama client error details: {type(ollama_error).__name__}: {str(ollama_error)}")
                     raise Exception(f"Both HTTP fallback and Ollama client failed: {str(fallback_error)}; {str(ollama_error)}")
     except Exception as e:
-        logger.error(f"All summarization methods failed: {str(e)}")
+        logger.error(f"[DEBUG] All summarization methods failed: {str(e)}")
+        logger.error(f"[DEBUG] Final error details: {type(e).__name__}: {str(e)}")
         raise
 
 @retry(max_attempts=2, delay=1)

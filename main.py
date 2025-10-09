@@ -131,34 +131,49 @@ async def health_check():
 async def capture_url(request: CaptureRequest, token: str = Depends(verify_token)):
     """Capture URL and save to Obsidian with auto-indexing"""
     start_time = time.time()
-    
+
     try:
         logger.info(f"Capturing URL: {request.url}")
+        logger.debug(f"[DEBUG] Capture request - URL: {request.url}, Method: {request.method}")
         log_api_call("/capture", {"url": str(request.url), "method": request.method})
 
         # Step 1: Scrape content
+        logger.debug(f"[DEBUG] Step 1: Starting URL scraping")
         scraped = scraper.scrape_url(str(request.url), request.method)
+        logger.debug(f"[DEBUG] Scraping completed successfully")
+        logger.debug(f"[DEBUG] Scraped title: {scraped.get('title', 'N/A')}")
+        logger.debug(f"[DEBUG] Scraped content length: {len(scraped.get('content', ''))}")
 
         # Step 2: Summarize
+        logger.debug(f"[DEBUG] Step 2: Starting content summarization")
         result = summarizer.summarize_content(scraped['content'])
+        logger.debug(f"[DEBUG] Summarization completed successfully")
+        logger.debug(f"[DEBUG] Summary length: {len(result.get('summary', ''))}")
+        logger.debug(f"[DEBUG] Model used: {result.get('model', 'Unknown')}")
 
         # Step 3: Save to Obsidian
+        logger.debug(f"[DEBUG] Step 3: Saving to Obsidian vault")
         file_path = obsidian_writer.save_to_obsidian(
             url=scraped['url'],
             title=scraped['title'],
             content=scraped['content'],
             summary=result['summary']
         )
+        logger.debug(f"[DEBUG] File saved to: {file_path}")
 
         # Step 4: Add incremental indexing
+        logger.debug(f"[DEBUG] Step 4: Starting incremental indexing")
         try:
             retriever.incremental_index(file_path)
             logger.info(f"Successfully indexed: {file_path}")
+            logger.debug(f"[DEBUG] Incremental indexing completed")
         except Exception as e:
             logger.warning(f"Failed to index file: {e}")
+            logger.debug(f"[DEBUG] Indexing error details: {type(e).__name__}: {str(e)}")
 
         duration = time.time() - start_time
         logger.info(f"Successfully saved to: {file_path} in {duration:.2f}s")
+        logger.debug(f"[DEBUG] Total capture process completed in {duration:.2f}s")
         log_api_call("/capture", {"url": str(request.url)}, True, None)
 
         return CaptureResponse(
@@ -170,7 +185,11 @@ async def capture_url(request: CaptureRequest, token: str = Depends(verify_token
 
     except Exception as e:
         duration = time.time() - start_time
+        logger.debug(f"[DEBUG] Capture failed after {duration:.2f}s")
         log_error(e, f"Capture failed after {duration:.2f}s")
+        logger.debug(f"[DEBUG] Capture error details: {type(e).__name__}: {str(e)}")
+        import traceback
+        logger.debug(f"[DEBUG] Full traceback: {traceback.format_exc()}")
         log_api_call("/capture", {"url": str(request.url)}, False, str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -178,21 +197,32 @@ async def capture_url(request: CaptureRequest, token: str = Depends(verify_token
 async def query_knowledge(request: QueryRequest, token: Optional[str] = Depends(optional_auth)):
     """Query the knowledge base"""
     start_time = time.time()
-    
+
     try:
         logger.info(f"Query: {request.query}")
+        logger.debug(f"[DEBUG] Query request - Query: {request.query}, Top_k: {request.top_k}")
         log_api_call("/query", {"query": request.query, "top_k": request.top_k})
 
+        logger.debug(f"[DEBUG] Starting vault query process")
         result = retriever.query_vault(request.query, request.top_k)
-        
+        logger.debug(f"[DEBUG] Vault query completed successfully")
+        logger.debug(f"[DEBUG] Result keys: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
+        logger.debug(f"[DEBUG] Answer length: {len(result.get('answer', ''))}")
+        logger.debug(f"[DEBUG] Number of sources: {len(result.get('sources', []))}")
+
         duration = time.time() - start_time
         logger.info(f"Query completed in {duration:.2f}s")
+        logger.debug(f"[DEBUG] Total query process completed in {duration:.2f}s")
         log_api_call("/query", {"query": request.query}, True, None)
 
         return QueryResponse(**result)
     except Exception as e:
         duration = time.time() - start_time
+        logger.debug(f"[DEBUG] Query failed after {duration:.2f}s")
         log_error(e, f"Query failed after {duration:.2f}s")
+        logger.debug(f"[DEBUG] Query error details: {type(e).__name__}: {str(e)}")
+        import traceback
+        logger.debug(f"[DEBUG] Full traceback: {traceback.format_exc()}")
         log_api_call("/query", {"query": request.query}, False, str(e))
         raise HTTPException(status_code=500, detail=str(e))
 

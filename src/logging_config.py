@@ -3,17 +3,17 @@ import os
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-def setup_logging(log_level: str = "INFO", log_file: str = "knowledge_api.log"):
+def setup_logging(log_level: str = "DEBUG", log_file: str = "knowledge_api.log"):
     """Configure application logging"""
 
     # Create logs directory if it doesn't exist
     logs_dir = Path("logs")
     logs_dir.mkdir(exist_ok=True)
-    
+
     log_path = logs_dir / log_file
-    
+
     # Convert string log level to logging constant
-    numeric_level = getattr(logging, log_level.upper(), logging.INFO)
+    numeric_level = getattr(logging, log_level.upper(), logging.DEBUG)
     
     # Create formatters
     formatter = logging.Formatter(
