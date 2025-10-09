@@ -220,8 +220,42 @@ with gr.Blocks(title="지식 저장소") as iface:
 
 # Run on all interfaces to access from mobile
 if __name__ == "__main__":
-    iface.launch(
-        server_name="0.0.0.0", 
-        server_port=7860,
-        share=False  # Set to True to create public link
-    )
+    import socket
+
+    server_name = "0.0.0.0"
+    server_port = 7860
+
+    # Check if port is already in use and find available port if needed
+    def find_available_port(start_port):
+        """Find an available port starting from start_port"""
+        for port_num in range(start_port, start_port + 10):  # Try 10 ports
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                    sock.settimeout(1)
+                    result = sock.connect_ex((server_name, port_num))
+                    if result != 0:  # Port is available
+                        return port_num
+            except Exception:
+                continue
+        raise RuntimeError(f"No available ports found in range {start_port}-{start_port + 9}")
+
+    try:
+        # Try to launch with configured port first
+        logger.info(f"Starting Gradio UI on {server_name}:{server_port}")
+        iface.launch(
+            server_name=server_name,
+            server_port=server_port,
+            share=False  # Set to True to create public link
+        )
+    except OSError as e:
+        if "Address already in use" in str(e):
+            logger.warning(f"Port {server_port} is already in use, finding available port...")
+            available_port = find_available_port(server_port + 1)
+            logger.info(f"Starting Gradio UI on {server_name}:{available_port}")
+            iface.launch(
+                server_name=server_name,
+                server_port=available_port,
+                share=False
+            )
+        else:
+            raise

@@ -223,9 +223,34 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 if __name__ == "__main__":
     import uvicorn
-    
+    import socket
+
     host = os.getenv("API_HOST", "0.0.0.0")
     port = int(os.getenv("API_PORT", "8000"))
-    
-    logger.info(f"Starting Knowledge Repository API on {host}:{port}")
-    uvicorn.run(app, host=host, port=port)
+
+    # Check if port is already in use and find available port if needed
+    def find_available_port(start_port):
+        """Find an available port starting from start_port"""
+        for port_num in range(start_port, start_port + 10):  # Try 10 ports
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                    sock.settimeout(1)
+                    result = sock.connect_ex((host, port_num))
+                    if result != 0:  # Port is available
+                        return port_num
+            except Exception:
+                continue
+        raise RuntimeError(f"No available ports found in range {start_port}-{start_port + 9}")
+
+    try:
+        # Try to bind to the configured port first
+        logger.info(f"Starting Knowledge Repository API on {host}:{port}")
+        uvicorn.run(app, host=host, port=port)
+    except OSError as e:
+        if "Address already in use" in str(e):
+            logger.warning(f"Port {port} is already in use, finding available port...")
+            available_port = find_available_port(port + 1)
+            logger.info(f"Starting Knowledge Repository API on {host}:{available_port}")
+            uvicorn.run(app, host=host, port=available_port)
+        else:
+            raise
