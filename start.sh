@@ -74,9 +74,9 @@ API_PID=$!
 # Wait a moment for API server to start
 sleep 3
 
-# Start Web UI
-print_status "Starting Web UI on port 7860..."
-python3 ui.py &
+# Start Simple Web UI (instead of problematic gradio)
+print_status "Starting Simple Web UI on port 7860..."
+python3 simple_server.py &
 UI_PID=$!
 
 # Function to cleanup on exit
@@ -93,7 +93,7 @@ trap cleanup SIGINT SIGTERM
 
 print_status "Services started successfully!"
 print_status "API Server: http://localhost:8000"
-print_status "Web UI: http://localhost:7860"
+print_status "Simple UI: http://localhost:7860/simple_ui.html"
 print_status "API Docs: http://localhost:8000/docs"
 print_status ""
 print_status "Press Ctrl+C to stop all services"

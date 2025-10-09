@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>지식 저장소</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-bottom: 2px solid transparent;
+            font-size: 16px;
+        }
+        .tab.active {
+            border-bottom-color: #007bff;
+            color: #007bff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+            background-color: #f8f9fa;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .loading {
+            display: none;
+            color: #007bff;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 지식 저장소</h1>
+        <p style="text-align: center; color: #666; margin-bottom: 30px;">
+            웹 페이지를 요약하여 Obsidian에 저장하고 의미론적 검색을 수행합니다.
+        </p>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('capture')">URL 캡처</button>
+            <button class="tab" onclick="showTab('query')">지식 검색</button>
+            <button class="tab" onclick="showTab('manage')">관리</button>
+        </div>
+
+        <!-- URL Capture Tab -->
+        <div id="capture" class="tab-content active">
+            <h2>웹 페이지 캡처</h2>
+            <div class="form-group">
+                <label for="url">URL:</label>
+                <input type="url" id="url" placeholder="https://example.com/article">
+            </div>
+            <div class="form-group">
+                <label for="method">스크래핑 방법:</label>
+                <select id="method">
+                    <option value="auto">자동</option>
+                    <option value="bash">Bash</option>
+                    <option value="python">Python</option>
+                </select>
+            </div>
+            <button onclick="captureUrl()">캡처</button>
+            <div id="capture-loading" class="loading">캡처 중...</div>
+            <div id="capture-result"></div>
+        </div>
+
+        <!-- Knowledge Query Tab -->
+        <div id="query" class="tab-content">
+            <h2>저장된 지식 검색</h2>
+            <div class="form-group">
+                <label for="search-query">검색어:</label>
+                <input type="text" id="search-query" placeholder="검색할 내용을 입력하세요...">
+            </div>
+            <div class="form-group">
+                <label for="top-k">검색 결과 수:</label>
+                <input type="range" id="top-k" min="1" max="10" value="5" oninput="this.nextElementSibling.textContent = this.value">
+                <span>5</span>
+            </div>
+            <button onclick="queryKnowledge()">검색</button>
+            <div id="query-loading" class="loading">검색 중...</div>
+            <div id="query-result"></div>
+        </div>
+
+        <!-- Management Tab -->
+        <div id="manage" class="tab-content">
+            <h2>시스템 관리</h2>
+            <button onclick="checkHealth()">상태 확인</button>
+            <div id="health-result"></div>
+
+            <h3>재인덱싱</h3>
+            <p>Obsidian vault의 모든 파일을 다시 인덱싱합니다.</p>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="force-reindex">
+                    기존 인덱스 삭제 후 재인덱싱
+                </label>
+            </div>
+            <button onclick="reindexVault()">재인덱싱 시작</button>
+            <div id="reindex-loading" class="loading">재인덱싱 중...</div>
+            <div id="reindex-result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        const API_TOKEN = ''; // Add your token if needed
+
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            };
+
+            if (API_TOKEN) {
+                options.headers['Authorization'] = `Bearer ${API_TOKEN}`;
+            }
+
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, options);
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Request failed');
+                }
+                return await response.json();
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function showResult(elementId, content, isError = false) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="result ${isError ? 'error' : ''}">${content}</div>`;
+        }
+
+        function showLoading(elementId, show = true) {
+            document.getElementById(elementId).style.display = show ? 'block' : 'none';
+        }
+
+        async function captureUrl() {
+            const url = document.getElementById('url').value;
+            const method = document.getElementById('method').value;
+
+            if (!url) {
+                showResult('capture-result', 'URL을 입력하세요.', true);
+                return;
+            }
+
+            showLoading('capture-loading', true);
+            document.getElementById('capture-result').innerHTML = '';
+
+            try {
+                const result = await apiCall('/capture', 'POST', { url, method });
+                showResult('capture-result', `
+                    <strong>✅ 저장 완료!</strong><br>
+                    파일: ${result.file_path}<br>
+                    제목: ${result.title}
+                `);
+            } catch (error) {
+                showResult('capture-result', `❌ 오류: ${error.message}`, true);
+            } finally {
+                showLoading('capture-loading', false);
+            }
+        }
+
+        async function queryKnowledge() {
+            const query = document.getElementById('search-query').value;
+            const topK = parseInt(document.getElementById('top-k').value);
+
+            if (!query) {
+                showResult('query-result', '검색어를 입력하세요.', true);
+                return;
+            }
+
+            showLoading('query-loading', true);
+            document.getElementById('query-result').innerHTML = '';
+
+            try {
+                const result = await apiCall('/query', 'POST', { query, top_k: topK });
+
+                let sources = '';
+                result.sources.forEach((source, i) => {
+                    sources += `<p><strong>${i + 1}. ${source.file_path}</strong><br>`;
+                    if (source.score) sources += `유사도: ${source.score.toFixed(3)}<br>`;
+                    sources += `내용: ${source.content_preview}</p>`;
+                });
+
+                showResult('query-result', `
+                    <h3>답변</h3>
+                    <p>${result.answer}</p>
+                    <h3>출처</h3>
+                    ${sources}
+                `);
+            } catch (error) {
+                showResult('query-result', `❌ 오류: ${error.message}`, true);
+            } finally {
+                showLoading('query-loading', false);
+            }
+        }
+
+        async function checkHealth() {
+            try {
+                const health = await apiCall('/health');
+                showResult('health-result', `
+                    <strong>✅ API 상태:</strong> ${health.status}<br>
+                    <strong>Ollama:</strong> ${health.ollama}<br>
+                    <strong>Vault:</strong> ${health.vault_path}
+                `);
+            } catch (error) {
+                showResult('health-result', `❌ API 상태 확인 실패: ${error.message}`, true);
+            }
+        }
+
+        async function reindexVault() {
+            const force = document.getElementById('force-reindex').checked;
+
+            showLoading('reindex-loading', true);
+            document.getElementById('reindex-result').innerHTML = '';
+
+            try {
+                const result = await apiCall('/reindex', 'POST', { force });
+                showResult('reindex-result', '✅ 재인덱싱 완료!');
+            } catch (error) {
+                showResult('reindex-result', `❌ 오류: ${error.message}`, true);
+            } finally {
+                showLoading('reindex-loading', false);
+            }
+        }
+
+        // Check health on page load
+        window.addEventListener('load', checkHealth);
+    </script>
+</body>
+</html>

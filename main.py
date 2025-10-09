@@ -8,16 +8,16 @@ import os
 import logging
 from typing import Optional
 
-# Import modules
+# Load environment variables FIRST
+load_dotenv()
+
+# Import modules AFTER loading environment variables
 import scraper
 import summarizer
 import obsidian_writer
 import retriever
 from auth import verify_token, optional_auth
 from logging_config import setup_logging, log_request_info, log_response_info, log_error, log_api_call
-
-# Load environment variables
-load_dotenv()
 
 # Setup logging
 setup_logging()
