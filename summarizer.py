@@ -29,9 +29,22 @@ def _ollama_chat_via_request(prompt: str, model: str = 'Qwen3-Coder-30B', temper
 
         # Handle OpenAI-like format
         if 'choices' in data and data['choices']:
-            return data['choices'][0]['message']['content']
-        else:
-            raise ValueError(f"Unexpected response format: {data}")
+            choice = data['choices'][0]
+            if 'message' in choice and 'content' in choice['message']:
+                return choice['message']['content']
+            elif 'text' in choice:  # Alternative format
+                return choice['text']
+
+        # Handle llama.cpp specific format
+        if 'content' in data:
+            return data['content']
+
+        # Try to extract content from response text directly
+        if 'response' in data:
+            return data['response']
+
+        logger.error(f"Response format: {data}")
+        raise ValueError(f"Unexpected response format: {data}")
 
     except Exception as e:
         logger.error(f"Error in fallback Ollama request: {str(e)}")
@@ -90,12 +103,22 @@ def summarize_content(content: str, max_length: int = 4000) -> Dict[str, str]:
             elif isinstance(response, dict):
                 # Try OpenAI-like format first
                 if 'choices' in response and response['choices']:
-                    content = response['choices'][0].get('message', {}).get('content')
+                    choice = response['choices'][0]
+                    if 'message' in choice:
+                        content = choice['message'].get('content')
+                    elif 'text' in choice:
+                        content = choice['text']
                 # Try original Ollama format
                 elif 'message' in response and response['message']:
                     content = response['message'].get('content')
+                # Try llama.cpp format
+                elif 'content' in response:
+                    content = response['content']
+                elif 'response' in response:
+                    content = response['response']
 
             if not content:
+                logger.error(f"Response format: {response}")
                 raise ValueError(f"Unable to extract content from response: {response}")
 
             return {

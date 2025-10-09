@@ -48,18 +48,38 @@ def scrape_url_with_python(url: str) -> Dict[str, str]:
     api_key = os.getenv("FIRECRAWL_API_KEY")
     if not api_key:
         raise ValueError("FIRECRAWL_API_KEY environment variable not set")
-    
+
     try:
         app = FirecrawlApp(api_key=api_key)
+        # Try the correct method name for current Firecrawl API
         result = app.scrape_url(
             url,
-            {'pageOptions': {'onlyMainContent': True}}
+            params={'pageOptions': {'onlyMainContent': True}}
         )
         return {
             'content': result.get('markdown', ''),
             'title': result.get('metadata', {}).get('title', 'Untitled'),
             'url': url
         }
+    except AttributeError as e:
+        # If scrape_url doesn't exist, try alternative method
+        if 'scrape_url' in str(e):
+            logger.warning("scrape_url method not found, trying alternative...")
+            try:
+                result = app.sync_scrape_url(
+                    url,
+                    params={'pageOptions': {'onlyMainContent': True}}
+                )
+                return {
+                    'content': result.get('markdown', ''),
+                    'title': result.get('metadata', {}).get('title', 'Untitled'),
+                    'url': url
+                }
+            except Exception as e2:
+                logger.error(f"Alternative Firecrawl method failed: {str(e2)}")
+                raise Exception(f"Firecrawl API method not available: {str(e2)}")
+        else:
+            raise
     except Exception as e:
         logger.error(f"Error scraping {url}: {str(e)}")
         raise
