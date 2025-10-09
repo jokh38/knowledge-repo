@@ -59,13 +59,13 @@ start "API Server" cmd /c "python main.py"
 REM Wait a moment for API server to start
 timeout /t 3 /nobreak >nul
 
-REM Start Web UI
-echo [INFO] Starting Web UI on port 7860...
-start "Web UI" cmd /c "python ui.py"
+REM Start Simple Web UI (same as Linux/macOS)
+echo [INFO] Starting Simple Web UI on port 7860...
+start "Web UI" cmd /c "python src/simple_server.py"
 
 echo [INFO] Services started successfully!
 echo [INFO] API Server: http://localhost:8000
-echo [INFO] Web UI: http://localhost:7860
+echo [INFO] Simple UI: http://localhost:7860/simple_ui.html
 echo [INFO] API Docs: http://localhost:8000/docs
 echo.
 echo [INFO] Close this window to stop all services

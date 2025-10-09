@@ -37,11 +37,19 @@ app = FastAPI(
 )
 
 # Add CORS middleware
+# For development, allow localhost origins. In production, update to specific domains.
+allowed_origins = [
+    "http://localhost:7860",    # Simple web UI
+    "http://localhost:8000",    # API server itself
+    "http://127.0.0.1:7860",    # Alternative localhost
+    "http://127.0.0.1:8000",    # Alternative localhost
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify actual origins
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],  # More restrictive methods
     allow_headers=["*"],
 )
 

@@ -1,114 +1,89 @@
 import pytest
 import os
 from unittest.mock import patch, MagicMock
-import scraper
+from src import scraper
 
 class TestScraper:
     """Test cases for scraper module"""
-    
-    def test_scrape_url_with_bash_success(self):
-        """Test successful bash scraping"""
-        with patch('subprocess.run') as mock_run:
-            with patch('os.path.exists', return_value=True):
-                # Mock successful subprocess result
-                mock_result = MagicMock()
-                mock_result.returncode = 0
-                mock_result.stdout = "Test content"
-                mock_run.return_value = mock_result
 
-                with patch.dict(os.environ, {'FIRECRAWL_SCRIPT_PATH': '/path/to/script'}):
-                    result = scraper.scrape_url_with_bash("https://example.com")
+    @patch('src.scraper.requests.get')
+    def test_scrape_with_beautifulsoup_success(self, mock_get):
+        """Test successful BeautifulSoup scraping"""
+        # Mock successful HTTP response
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = '''
+        <html>
+            <head><title>Test Page</title></head>
+            <body>
+                <h1>Main Title</h1>
+                <p>This is a test paragraph.</p>
+                <p>Another paragraph with content.</p>
+                <ul>
+                    <li>List item 1</li>
+                    <li>List item 2</li>
+                </ul>
+            </body>
+        </html>
+        '''
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
 
-                    assert result['content'] == "Test content"
-                    assert result['url'] == "https://example.com"
-                    assert 'title' in result
-    
-    def test_scrape_url_with_bash_failure(self):
-        """Test bash scraping failure"""
-        with patch('subprocess.run') as mock_run:
-            # Mock failed subprocess result
-            mock_result = MagicMock()
-            mock_result.returncode = 1
-            mock_result.stderr = "Script failed"
-            mock_run.return_value = mock_result
-            
-            with patch.dict(os.environ, {'FIRECRAWL_SCRIPT_PATH': '/path/to/script'}):
-                with pytest.raises(Exception):
-                    scraper.scrape_url_with_bash("https://example.com")
-    
-    def test_scrape_url_with_bash_no_script(self):
-        """Test bash scraping with no script path"""
-        with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(ValueError):
-                scraper.scrape_url_with_bash("https://example.com")
-    
-    def test_scrape_url_with_python_success(self):
-        """Test successful Python scraping"""
-        with patch('scraper.FirecrawlApp') as mock_app:
-            # Mock FirecrawlApp
-            mock_instance = MagicMock()
-            mock_app.return_value = mock_instance
-            mock_instance.scrape_url.return_value = {
-                'markdown': 'Test content',
-                'metadata': {'title': 'Test Title'}
-            }
-            
-            with patch.dict(os.environ, {'FIRECRAWL_API_KEY': 'test_key'}):
-                result = scraper.scrape_url_with_python("https://example.com")
-                
-                assert result['content'] == "Test content"
-                assert result['title'] == "Test Title"
-                assert result['url'] == "https://example.com"
-    
-    def test_scrape_url_with_python_no_api_key(self):
-        """Test Python scraping with no API key"""
-        with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(ValueError):
-                scraper.scrape_url_with_python("https://example.com")
-    
-    @patch('scraper.scrape_url_with_bash')
-    @patch('scraper.scrape_url_with_python')
-    def test_scrape_url_auto_fallback(self, mock_python, mock_bash):
-        """Test auto method fallback from bash to python"""
-        # Mock bash failure
-        mock_bash.side_effect = Exception("Bash failed")
-        # Mock python success
-        mock_python.return_value = {
-            'content': 'Python content',
-            'title': 'Python Title',
+        result = scraper.scrape_with_beautifulsoup("https://example.com")
+
+        assert result['content'] != ""
+        assert result['title'] == "Test Page"
+        assert result['url'] == "https://example.com"
+        assert "# Main Title" in result['content']
+        assert "This is a test paragraph." in result['content']
+        assert "- List item 1" in result['content']
+
+    @patch('src.scraper.requests.get')
+    def test_scrape_with_beautifulsoup_http_error(self, mock_get):
+        """Test BeautifulSoup scraping with HTTP error"""
+        mock_response = MagicMock()
+        mock_response.raise_for_status.side_effect = Exception("HTTP 404 Not Found")
+        mock_get.return_value = mock_response
+
+        with pytest.raises(Exception) as exc_info:
+            scraper.scrape_with_beautifulsoup("https://example.com")
+
+        assert "HTTP 404 Not Found" in str(exc_info.value)
+
+    @patch('src.scraper.requests.get')
+    def test_scrape_with_beautifulsoup_no_title(self, mock_get):
+        """Test BeautifulSoup scraping with no title"""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = '<html><body><p>No title here</p></body></html>'
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+
+        result = scraper.scrape_with_beautifulsoup("https://example.com")
+
+        assert result['title'] == "No Title Found"
+        assert result['url'] == "https://example.com"
+        assert "No title here" in result['content']
+
+    @patch('src.scraper.scrape_with_beautifulsoup')
+    def test_scrape_url_function(self, mock_beautifulsoup):
+        """Test main scrape_url function"""
+        mock_beautifulsoup.return_value = {
+            'content': 'Test content',
+            'title': 'Test Title',
             'url': 'https://example.com'
         }
-        
-        result = scraper.scrape_url("https://example.com", method=None)
-        
-        assert result['content'] == "Python content"
-        mock_bash.assert_called_once_with("https://example.com")
-        mock_python.assert_called_once_with("https://example.com")
-    
-    @patch('scraper.scrape_url_with_bash')
-    def test_scrape_url_bash_method(self, mock_bash):
-        """Test explicit bash method"""
-        mock_bash.return_value = {
-            'content': 'Bash content',
-            'title': 'Bash Title',
-            'url': 'https://example.com'
-        }
-        
+
+        # Test with method parameter (should be ignored)
         result = scraper.scrape_url("https://example.com", method="bash")
-        
-        assert result['content'] == "Bash content"
-        mock_bash.assert_called_once_with("https://example.com")
-    
-    @patch('scraper.scrape_url_with_python')
-    def test_scrape_url_python_method(self, mock_python):
-        """Test explicit python method"""
-        mock_python.return_value = {
-            'content': 'Python content',
-            'title': 'Python Title',
-            'url': 'https://example.com'
-        }
-        
-        result = scraper.scrape_url("https://example.com", method="python")
-        
-        assert result['content'] == "Python content"
-        mock_python.assert_called_once_with("https://example.com")
+
+        assert result['content'] == "Test content"
+        assert result['title'] == "Test Title"
+        assert result['url'] == "https://example.com"
+        mock_beautifulsoup.assert_called_once_with("https://example.com")
+
+        # Test without method parameter
+        result2 = scraper.scrape_url("https://example.com")
+
+        assert result2['content'] == "Test content"
+        assert mock_beautifulsoup.call_count == 2
