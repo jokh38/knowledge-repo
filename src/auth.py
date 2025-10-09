@@ -10,7 +10,9 @@ from passlib.context import CryptContext
 logger = logging.getLogger(__name__)
 
 # JWT Configuration
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY environment variable must be set in production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -82,16 +84,22 @@ def authenticate_user(username: str, password: str) -> bool:
     """
     Authenticate user (placeholder implementation)
     In a real implementation, you would check against a database
+    WARNING: This is only for development - use proper authentication in production!
     """
+    # For development only - remove or replace with proper authentication in production
+    if os.getenv("ENVIRONMENT") == "production":
+        logger.error("Production environment detected - placeholder authentication not allowed")
+        return False
+
     # This is a simple placeholder - in production, use a proper user database
     users = {
         "admin": get_password_hash("admin123"),
         "user": get_password_hash("user123")
     }
-    
+
     if username not in users:
         return False
-    
+
     return verify_password(password, users[username])
 
 def get_current_user(token: str = Depends(verify_token)):

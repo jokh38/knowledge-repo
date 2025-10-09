@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 import logging
@@ -18,14 +19,31 @@ def save_to_obsidian(url: str, title: str, content: str, summary: str) -> str:
     inbox_path = Path(vault_path) / "00_Inbox" / "Clippings"
     inbox_path.mkdir(parents=True, exist_ok=True)
 
-    # Generate filename
+    # Generate filename with proper sanitization
     today = datetime.now().strftime("%Y-%m-%d")
-    safe_title = "".join(c for c in title if c.isalnum() or c in " -_").strip()[:50]
+    # Remove dangerous characters and limit length
+    safe_title = re.sub(r'[<>:"/\\|?*]', '', title)  # Remove invalid filename chars
+    safe_title = re.sub(r'[\s-]+', '-', safe_title)  # Replace spaces with single dash
+    safe_title = safe_title.strip('-_')[:50]  # Remove leading/trailing dashes and limit length
     if not safe_title:
         safe_title = "Untitled"
-    
+
     filename = f"{today} - {safe_title}.md"
+
+    # Additional security: validate the path stays within the intended directory
     filepath = inbox_path / filename
+
+    # Path traversal protection
+    try:
+        resolved_path = filepath.resolve()
+        inbox_resolved = inbox_path.resolve()
+
+        # Ensure the file is within the intended directory
+        if not str(resolved_path).startswith(str(inbox_resolved)):
+            raise ValueError(f"Path traversal attempt detected: {filepath}")
+    except (ValueError, RuntimeError) as e:
+        logger.error(f"Invalid file path: {e}")
+        raise ValueError(f"Invalid filename: {safe_title}")
 
     # Create markdown content with proper YAML frontmatter
     md_content = f"""---
