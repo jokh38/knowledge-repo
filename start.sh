@@ -47,6 +47,17 @@ if [ ! -f ".env" ]; then
     exit 1
 fi
 
+# Cleanup existing services before starting new ones
+print_status "Cleaning up existing services..."
+if [ -f "./cleanup.sh" ]; then
+    ./cleanup.sh
+else
+    print_warning "cleanup.sh not found, performing basic cleanup..."
+    # Basic cleanup if cleanup.sh is not available
+    pkill -f "python3.*\(main\|ui\|simple_server\)\.py" 2>/dev/null || true
+    sleep 2
+fi
+
 # Create necessary directories
 print_status "Creating necessary directories..."
 mkdir -p logs
