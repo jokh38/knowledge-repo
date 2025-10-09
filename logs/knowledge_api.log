@@ -7,3 +7,5 @@
 2025-10-09 17:30:31,356 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
 2025-10-09 17:33:04,342 - request - INFO - Request: GET http://localhost:8000/health from 127.0.0.1
 2025-10-09 17:33:04,343 - response - INFO - Response: 200 in 0.001s
+2025-10-09 17:37:37,505 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 19:08:06,182 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000

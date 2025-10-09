@@ -25,7 +25,8 @@
       "Bash(timeout:*)",
       "Bash(git rm:*)",
       "Bash(/home/jokh38/miniconda3/lib/python3.10/site-packages/tokenizers/__init__.py)",
-      "Read(//home/jokh38/miniconda3/lib/python3.10/site-packages/**)"
+      "Read(//home/jokh38/miniconda3/lib/python3.10/site-packages/**)",
+      "Read(//home/jokh38/.local/lib/python3.10/site-packages/**)"
     ],
     "deny": [],
     "ask": []

@@ -79,7 +79,7 @@ print_status "Starting Knowledge Repository services..."
 
 # Start API server in background
 print_status "Starting API server on port 8000..."
-python3 main.py &
+python3 run_with_env.py main.py &
 API_PID=$!
 
 # Wait a moment for API server to start
