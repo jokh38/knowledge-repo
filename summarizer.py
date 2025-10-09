@@ -12,6 +12,8 @@ def _ollama_chat_via_request(prompt: str, model: str = 'Qwen3-Coder-30B', temper
     """Fallback Ollama chat using direct HTTP request"""
     try:
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+
+        # Try OpenAI-compatible endpoint first
         api_url = f"{base_url}/v1/chat/completions"
 
         payload = {
@@ -23,8 +25,21 @@ def _ollama_chat_via_request(prompt: str, model: str = 'Qwen3-Coder-30B', temper
         }
 
         response = requests.post(api_url, json=payload, timeout=60)
-        response.raise_for_status()
 
+        # If OpenAI endpoint fails, try native Ollama endpoint
+        if response.status_code != 200:
+            logger.warning(f"OpenAI endpoint failed: {response.status_code}, trying native Ollama endpoint...")
+            api_url = f"{base_url}/api/chat"
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
+                "stream": False
+            }
+            response = requests.post(api_url, json=payload, timeout=60)
+
+        response.raise_for_status()
         data = response.json()
 
         # Handle OpenAI-like format
@@ -34,6 +49,11 @@ def _ollama_chat_via_request(prompt: str, model: str = 'Qwen3-Coder-30B', temper
                 return choice['message']['content']
             elif 'text' in choice:  # Alternative format
                 return choice['text']
+
+        # Handle native Ollama format
+        if 'message' in data and data['message']:
+            if 'content' in data['message']:
+                return data['message']['content']
 
         # Handle llama.cpp specific format
         if 'content' in data:
@@ -88,55 +108,59 @@ def summarize_content(content: str, max_length: int = 4000) -> Dict[str, str]:
                 'model': 'Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_XL.gguf'
             }
         else:
-            # Try Ollama client for native Ollama servers
-            client = ollama.Client(host=base_url)
-            response = client.chat(
-                model='Qwen3-Coder-30B',
-                messages=[{'role': 'user', 'content': prompt}],
-                options={'temperature': 0.3}
-            )
+            # Try fallback HTTP request method first to avoid Ollama client issues
+            try:
+                content = _ollama_chat_via_request(prompt, 'Qwen3-Coder-30B', 0.3)
+                return {
+                    'summary': content,
+                    'model': 'Qwen3-Coder-30B'
+                }
+            except Exception as fallback_error:
+                logger.warning(f"Fallback HTTP request failed: {fallback_error}. Trying Ollama client...")
+                # Try Ollama client as last resort
+                try:
+                    client = ollama.Client(host=base_url)
+                    response = client.chat(
+                        model='Qwen3-Coder-30B',
+                        messages=[{'role': 'user', 'content': prompt}],
+                        options={'temperature': 0.3}
+                    )
 
-            # Handle different response formats
-            content = None
-            if hasattr(response, 'message') and response.message:
-                content = response.message.content
-            elif isinstance(response, dict):
-                # Try OpenAI-like format first
-                if 'choices' in response and response['choices']:
-                    choice = response['choices'][0]
-                    if 'message' in choice:
-                        content = choice['message'].get('content')
-                    elif 'text' in choice:
-                        content = choice['text']
-                # Try original Ollama format
-                elif 'message' in response and response['message']:
-                    content = response['message'].get('content')
-                # Try llama.cpp format
-                elif 'content' in response:
-                    content = response['content']
-                elif 'response' in response:
-                    content = response['response']
+                    # Handle different response formats
+                    content = None
+                    if hasattr(response, 'message') and response.message:
+                        content = response.message.content
+                    elif isinstance(response, dict):
+                        # Try OpenAI-like format first
+                        if 'choices' in response and response['choices']:
+                            choice = response['choices'][0]
+                            if 'message' in choice:
+                                content = choice['message'].get('content')
+                            elif 'text' in choice:
+                                content = choice['text']
+                        # Try original Ollama format
+                        elif 'message' in response and response['message']:
+                            content = response['message'].get('content')
+                        # Try llama.cpp format
+                        elif 'content' in response:
+                            content = response['content']
+                        elif 'response' in response:
+                            content = response['response']
 
-            if not content:
-                logger.error(f"Response format: {response}")
-                raise ValueError(f"Unable to extract content from response: {response}")
+                    if not content:
+                        logger.error(f"Response format: {response}")
+                        raise ValueError(f"Unable to extract content from response: {response}")
 
-            return {
-                'summary': content,
-                'model': 'Qwen3-Coder-30B'
-            }
+                    return {
+                        'summary': content,
+                        'model': 'Qwen3-Coder-30B'
+                    }
+                except Exception as ollama_error:
+                    logger.error(f"Ollama client failed: {str(ollama_error)}")
+                    raise Exception(f"Both HTTP fallback and Ollama client failed: {str(fallback_error)}; {str(ollama_error)}")
     except Exception as e:
-        logger.warning(f"Direct LLM call failed: {e}. Using fallback HTTP request...")
-        # Use fallback HTTP request method
-        try:
-            content = _ollama_chat_via_request(prompt, 'Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_XL.gguf', 0.3)
-            return {
-                'summary': content,
-                'model': 'Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_XL.gguf'
-            }
-        except Exception as fallback_error:
-            logger.error(f"Both primary and fallback failed: {str(fallback_error)}")
-            raise
+        logger.error(f"All summarization methods failed: {str(e)}")
+        raise
 
 @retry(max_attempts=2, delay=1)
 def extract_keywords(content: str, max_keywords: int = 5) -> list:

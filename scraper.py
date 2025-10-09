@@ -1,7 +1,7 @@
 import subprocess
 import os
 from typing import Dict, Optional
-from firecrawl import FirecrawlApp
+from firecrawl import Firecrawl
 import logging
 from utils.retry import retry
 import requests
@@ -50,26 +50,20 @@ def scrape_url_with_python(url: str) -> Dict[str, str]:
         raise ValueError("FIRECRAWL_API_KEY environment variable not set")
 
     try:
-        app = FirecrawlApp(api_key=api_key)
-        # Try the correct method name for current Firecrawl API
-        result = app.scrape_url(
-            url,
-            params={'pageOptions': {'onlyMainContent': True}}
-        )
+        app = Firecrawl(api_key=api_key)
+        # Use the correct scrape method for current Firecrawl API
+        result = app.scrape(url, {'pageOptions': {'onlyMainContent': True}})
         return {
             'content': result.get('markdown', ''),
             'title': result.get('metadata', {}).get('title', 'Untitled'),
             'url': url
         }
     except AttributeError as e:
-        # If scrape_url doesn't exist, try alternative method
-        if 'scrape_url' in str(e):
-            logger.warning("scrape_url method not found, trying alternative...")
+        # If scrape doesn't exist, try alternative method
+        if 'scrape' in str(e):
+            logger.warning("scrape method not found, trying alternative...")
             try:
-                result = app.sync_scrape_url(
-                    url,
-                    params={'pageOptions': {'onlyMainContent': True}}
-                )
+                result = app.scrape_url(url, {'pageOptions': {'onlyMainContent': True}})
                 return {
                     'content': result.get('markdown', ''),
                     'title': result.get('metadata', {}).get('title', 'Untitled'),
