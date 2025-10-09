@@ -3,7 +3,7 @@ import os
 from typing import Dict, Optional
 from firecrawl import Firecrawl
 import logging
-from utils.retry import retry
+from src.retry import retry
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -60,36 +60,36 @@ def scrape_url_with_bash(url: str) -> Dict[str, str]:
 def scrape_url_with_python(url: str) -> Dict[str, str]:
     """Use Python Firecrawl library"""
     api_key = os.getenv("FIRECRAWL_API_KEY")
-    if not api_key:
-        raise ValueError("FIRECRAWL_API_KEY environment variable not set")
+    if not api_key or api_key == "your_firecrawl_api_key_here":
+        raise ValueError("FIRECRAWL_API_KEY environment variable not set or is placeholder")
 
     try:
         app = Firecrawl(api_key=api_key)
-        # Use the correct scrape method for current Firecrawl API
-        result = app.scrape(url, {'pageOptions': {'onlyMainContent': True}})
-        return {
-            'content': result.get('markdown', ''),
-            'title': result.get('metadata', {}).get('title', 'Untitled'),
-            'url': url
-        }
-    except AttributeError as e:
-        # If scrape doesn't exist, try alternative method
-        if 'scrape' in str(e):
-            logger.warning("scrape method not found, trying alternative...")
-            try:
-                result = app.scrape_url(url, {'pageOptions': {'onlyMainContent': True}})
-                return {
-                    'content': result.get('markdown', ''),
-                    'title': result.get('metadata', {}).get('title', 'Untitled'),
-                    'url': url
-                }
-            except Exception as e2:
-                logger.error(f"Alternative Firecrawl method failed: {str(e2)}")
-                raise Exception(f"Firecrawl API method not available: {str(e2)}")
-        else:
-            raise
+        logger.debug(f"[DEBUG] Firecrawl app initialized, trying to scrape: {url}")
+
+        # Try current Firecrawl API method (v1)
+        try:
+            result = app.scrape(url, params={'formats': ['markdown']})
+            logger.debug(f"[DEBUG] Firecrawl v1 scrape successful")
+            return {
+                'content': result.get('markdown', ''),
+                'title': result.get('metadata', {}).get('title', 'Untitled'),
+                'url': url
+            }
+        except TypeError as type_error:
+            logger.debug(f"[DEBUG] v1 method failed with TypeError: {type_error}")
+            # Fallback to older method signature
+            result = app.scrape_url(url, params={'formats': ['markdown']})
+            logger.debug(f"[DEBUG] Firecrawl legacy scrape successful")
+            return {
+                'content': result.get('markdown', ''),
+                'title': result.get('metadata', {}).get('title', 'Untitled'),
+                'url': url
+            }
+
     except Exception as e:
-        logger.error(f"Error scraping {url}: {str(e)}")
+        logger.error(f"Error scraping {url} with Firecrawl: {str(e)}")
+        logger.debug(f"[DEBUG] Firecrawl error type: {type(e).__name__}")
         raise
 
 @retry(max_attempts=3, delay=2)

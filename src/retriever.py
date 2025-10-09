@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 import logging
 from typing import Dict, List, Optional
-from utils.retry import retry
+from src.retry import retry
 from src.custom_llm import LlamaCppLLM
 
 logger = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ else:
     )
     logger.debug(f"[DEBUG] LlamaIndex Ollama LLM initialized successfully")
 
-# Embedding Model - using a lightweight model that should work
+# Embedding Model - prioritize local embeddings
 logger.debug(f"[DEBUG] Initializing embedding model")
 try:
     # Use a very simple embedding model that doesn't require heavy dependencies
@@ -56,51 +56,49 @@ try:
         model_name="all-MiniLM-L6-v2",
         embed_batch_size=1  # Process one at a time to reduce memory pressure
     )
-    logger.debug(f"[DEBUG] Embedding model initialized successfully")
+    logger.debug(f"[DEBUG] HuggingFace embedding model initialized successfully")
 except Exception as e:
-    logger.error(f"[DEBUG] Failed to initialize embedding model: {str(e)}")
-    logger.debug(f"[DEBUG] Trying to use OpenAI embeddings as fallback...")
-    try:
-        from llama_index.embeddings.openai import OpenAIEmbedding
-        # Note: This requires OpenAI API key, so it's just for testing
-        Settings.embed_model = OpenAIEmbedding(
-            model="text-embedding-ada-002",
-            api_key="dummy_key"  # This will fail but gives a cleaner error
-        )
-        logger.debug(f"[DEBUG] OpenAI embedding model set as fallback")
-    except Exception as e2:
-        logger.error(f"[DEBUG] OpenAI embeddings failed: {str(e2)}")
-        logger.debug(f"[DEBUG] Using very simple mock embedding for testing...")
-        # As a last resort, create a very simple mock embedding
-        import numpy as np
-        from typing import List
-        from llama_index.core.embeddings import BaseEmbedding
+    logger.error(f"[DEBUG] Failed to initialize HuggingFace embedding model: {str(e)}")
+    logger.debug(f"[DEBUG] Using simple mock embedding for testing...")
+    # As a last resort, create a very simple mock embedding
+    import numpy as np
+    from typing import List
+    from llama_index.core.embeddings import BaseEmbedding
 
-        class SimpleMockEmbedding(BaseEmbedding):
-            def _get_query_embedding(self, query: str) -> List[float]:
-                # Simple hash-based embedding for testing
-                import hashlib
-                hash_obj = hashlib.md5(query.encode())
-                hex_dig = hash_obj.hexdigest()
-                # Convert to float array
-                embedding = []
-                for i in range(0, len(hex_dig), 2):
-                    byte_val = int(hex_dig[i:i+2], 16)
-                    embedding.append(byte_val / 255.0 - 0.5)  # Normalize to [-0.5, 0.5]
-                # Pad or truncate to 384 dimensions
-                while len(embedding) < 384:
-                    embedding.append(0.0)
-                return embedding[:384]
+    class SimpleMockEmbedding(BaseEmbedding):
+        def _get_query_embedding(self, query: str) -> List[float]:
+            # Simple hash-based embedding for testing
+            import hashlib
+            hash_obj = hashlib.md5(query.encode())
+            hex_dig = hash_obj.hexdigest()
+            # Convert to float array
+            embedding = []
+            for i in range(0, len(hex_dig), 2):
+                byte_val = int(hex_dig[i:i+2], 16)
+                embedding.append(byte_val / 255.0 - 0.5)  # Normalize to [-0.5, 0.5]
+            # Pad or truncate to 384 dimensions
+            while len(embedding) < 384:
+                embedding.append(0.0)
+            return embedding[:384]
 
-            def _get_text_embedding(self, text: str) -> List[float]:
-                return self._get_query_embedding(text)
+        def _get_text_embedding(self, text: str) -> List[float]:
+            return self._get_query_embedding(text)
 
-            def _get_text_embeddings(self, texts: List[str]) -> List[List[float]]:
-                return [self._get_text_embedding(text) for text in texts]
+        def _get_text_embeddings(self, texts: List[str]) -> List[List[float]]:
+            return [self._get_text_embedding(text) for text in texts]
 
-        Settings.embed_model = SimpleMockEmbedding()
-        logger.debug(f"[DEBUG] Simple mock embedding initialized for testing")
-        logger.debug(f"[DEBUG] Embedding model set to: {type(Settings.embed_model)}")
+        async def _aget_query_embedding(self, query: str) -> List[float]:
+            return self._get_query_embedding(query)
+
+        async def _aget_text_embedding(self, text: str) -> List[float]:
+            return self._get_text_embedding(text)
+
+        async def _aget_text_embeddings(self, texts: List[str]) -> List[List[float]]:
+            return [self._get_text_embedding(text) for text in texts]
+
+    Settings.embed_model = SimpleMockEmbedding()
+    logger.debug(f"[DEBUG] Simple mock embedding initialized for testing")
+    logger.debug(f"[DEBUG] Embedding model set to: {type(Settings.embed_model)}")
 
 @retry(max_attempts=3, delay=2)
 def get_vector_store():
@@ -289,6 +287,7 @@ def incremental_index(file_path: str):
         elif "context_window" in error_str:
             logger.error(f"[INDEXER] LLM metadata error during indexing: {e}")
 
+        import traceback
         logger.error(f"[INDEXER] Indexing error traceback: {traceback.format_exc()}")
         raise
 

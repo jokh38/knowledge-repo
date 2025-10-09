@@ -5,7 +5,7 @@ import logging
 import os
 import json
 import time
-from utils.retry import retry
+from src.retry import retry
 
 logger = logging.getLogger(__name__)
 
