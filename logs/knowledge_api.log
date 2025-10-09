@@ -53,3 +53,54 @@ message
 2025-10-09 19:22:19,593 - __main__ - INFO - Query completed in 4.80s
 2025-10-09 19:22:19,593 - api - INFO - API call to /query with params {'query': 'test'} successful
 2025-10-09 19:22:19,594 - response - INFO - Response: 200 in 4.809s
+2025-10-09 19:23:41,289 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 19:24:43,646 - request - INFO - Request: GET http://localhost:8000/health from 127.0.0.1
+2025-10-09 19:24:43,647 - response - INFO - Response: 200 in 0.001s
+2025-10-09 19:25:16,658 - request - INFO - Request: POST http://localhost:8000/capture from 127.0.0.1
+2025-10-09 19:25:16,663 - __main__ - INFO - Capturing URL: https://example.com/
+2025-10-09 19:25:16,664 - api - INFO - API call to /capture with params {'url': 'https://example.com/', 'method': None} successful
+2025-10-09 19:25:17,052 - src.scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 19:25:17,053 - root - WARNING - scrape_url_with_bash attempt 1 failed: Firecrawl failed: . Retrying in 2s...
+2025-10-09 19:25:19,398 - src.scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 19:25:19,398 - root - WARNING - scrape_url_with_bash attempt 2 failed: Firecrawl failed: . Retrying in 4s...
+2025-10-09 19:25:23,722 - src.scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 19:25:23,722 - root - ERROR - scrape_url_with_bash failed after 3 attempts: Firecrawl failed: 
+2025-10-09 19:25:23,722 - src.scraper - WARNING - Bash method failed: Firecrawl failed: . Trying Python method...
+2025-10-09 19:25:23,723 - src.scraper - ERROR - Error scraping https://example.com/: FirecrawlClient.scrape() takes 2 positional arguments but 3 were given
+2025-10-09 19:25:23,724 - root - WARNING - scrape_url_with_python attempt 1 failed: FirecrawlClient.scrape() takes 2 positional arguments but 3 were given. Retrying in 2s...
+2025-10-09 19:25:25,726 - src.scraper - ERROR - Error scraping https://example.com/: FirecrawlClient.scrape() takes 2 positional arguments but 3 were given
+2025-10-09 19:25:25,727 - root - WARNING - scrape_url_with_python attempt 2 failed: FirecrawlClient.scrape() takes 2 positional arguments but 3 were given. Retrying in 4s...
+2025-10-09 19:25:29,732 - src.scraper - ERROR - Error scraping https://example.com/: FirecrawlClient.scrape() takes 2 positional arguments but 3 were given
+2025-10-09 19:25:29,732 - root - ERROR - scrape_url_with_python failed after 3 attempts: FirecrawlClient.scrape() takes 2 positional arguments but 3 were given
+2025-10-09 19:25:29,732 - src.scraper - WARNING - Python method failed: FirecrawlClient.scrape() takes 2 positional arguments but 3 were given. Using requests fallback...
+2025-10-09 19:25:36,392 - src.obsidian_writer - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Example-Domain.md
+2025-10-09 19:25:37,185 - src.retriever - INFO - Indexed new file: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Example-Domain.md
+2025-10-09 19:25:37,185 - __main__ - INFO - Successfully indexed: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Example-Domain.md
+2025-10-09 19:25:37,186 - __main__ - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Example-Domain.md in 20.52s
+2025-10-09 19:25:37,186 - api - INFO - API call to /capture with params {'url': 'https://example.com/'} successful
+2025-10-09 19:25:37,187 - response - INFO - Response: 200 in 20.528s
+2025-10-09 19:26:40,682 - request - INFO - Request: OPTIONS http://localhost:8000/capture from 127.0.0.1
+2025-10-09 19:26:40,684 - response - INFO - Response: 200 in 0.001s
+2025-10-09 19:27:06,490 - request - INFO - Request: POST http://localhost:8000/capture from 127.0.0.1
+2025-10-09 19:27:06,493 - __main__ - INFO - Capturing URL: https://example.com/
+2025-10-09 19:27:06,493 - api - INFO - API call to /capture with params {'url': 'https://example.com/', 'method': None} successful
+2025-10-09 19:27:06,876 - src.scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 19:27:06,876 - root - WARNING - scrape_url_with_bash attempt 1 failed: Firecrawl failed: . Retrying in 2s...
+2025-10-09 19:27:09,225 - src.scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 19:27:09,225 - root - WARNING - scrape_url_with_bash attempt 2 failed: Firecrawl failed: . Retrying in 4s...
+2025-10-09 19:27:13,611 - src.scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 19:27:13,611 - root - ERROR - scrape_url_with_bash failed after 3 attempts: Firecrawl failed: 
+2025-10-09 19:27:13,611 - src.scraper - WARNING - Bash method failed: Firecrawl failed: . Trying Python method...
+2025-10-09 19:27:13,612 - src.scraper - ERROR - Error scraping https://example.com/: FirecrawlClient.scrape() takes 2 positional arguments but 3 were given
+2025-10-09 19:27:13,612 - root - WARNING - scrape_url_with_python attempt 1 failed: FirecrawlClient.scrape() takes 2 positional arguments but 3 were given. Retrying in 2s...
+2025-10-09 19:27:15,614 - src.scraper - ERROR - Error scraping https://example.com/: FirecrawlClient.scrape() takes 2 positional arguments but 3 were given
+2025-10-09 19:27:15,615 - root - WARNING - scrape_url_with_python attempt 2 failed: FirecrawlClient.scrape() takes 2 positional arguments but 3 were given. Retrying in 4s...
+2025-10-09 19:27:19,620 - src.scraper - ERROR - Error scraping https://example.com/: FirecrawlClient.scrape() takes 2 positional arguments but 3 were given
+2025-10-09 19:27:19,620 - root - ERROR - scrape_url_with_python failed after 3 attempts: FirecrawlClient.scrape() takes 2 positional arguments but 3 were given
+2025-10-09 19:27:19,620 - src.scraper - WARNING - Python method failed: FirecrawlClient.scrape() takes 2 positional arguments but 3 were given. Using requests fallback...
+2025-10-09 19:27:25,885 - src.obsidian_writer - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Example-Domain.md
+2025-10-09 19:27:25,959 - src.retriever - INFO - Indexed new file: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Example-Domain.md
+2025-10-09 19:27:25,961 - __main__ - INFO - Successfully indexed: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Example-Domain.md
+2025-10-09 19:27:25,961 - __main__ - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Example-Domain.md in 19.47s
+2025-10-09 19:27:25,961 - api - INFO - API call to /capture with params {'url': 'https://example.com/'} successful
+2025-10-09 19:27:25,964 - response - INFO - Response: 200 in 19.474s
