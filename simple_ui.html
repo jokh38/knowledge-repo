@@ -98,6 +98,10 @@
         <p style="text-align: center; color: #666; margin-bottom: 30px;">
             웹 페이지를 요약하여 Obsidian에 저장하고 의미론적 검색을 수행합니다.
         </p>
+        <div style="background-color: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 4px; padding: 10px; margin-bottom: 20px; font-size: 12px;">
+            <strong>ℹ️ 팁:</strong> API 서버가 실행 중인지 확인하세요. 터미널에서 <code>python3 main.py</code>를 실행하여 서버를 시작할 수 있습니다.
+            API 서버는 <code>http://localhost:8000</code>에서 실행됩니다.
+        </div>
 
         <div class="tabs">
             <button class="tab active" onclick="showTab('capture')">URL 캡처</button>
@@ -186,10 +190,14 @@
                 const response = await fetch(`${API_BASE}${endpoint}`, options);
                 if (!response.ok) {
                     const error = await response.json();
-                    throw new Error(error.detail || 'Request failed');
+                    throw new Error(error.detail || `Request failed with status ${response.status}`);
                 }
                 return await response.json();
             } catch (error) {
+                console.error('API call failed:', error);
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    throw new Error(`네트워크 오류: API 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요. (${API_BASE})`);
+                }
                 throw error;
             }
         }
@@ -281,13 +289,46 @@
         async function checkHealth() {
             try {
                 const health = await apiCall('/health');
+                updateConnectionStatus(true);
                 showResult('health-result', `
                     <strong>✅ API 상태:</strong> ${health.status}<br>
                     <strong>Ollama:</strong> ${health.ollama}<br>
-                    <strong>Vault:</strong> ${health.vault_path}
+                    <strong>Vault:</strong> ${health.vault_path}<br>
+                    <strong>ChromaDB:</strong> ${health.chroma_db}
                 `);
             } catch (error) {
+                updateConnectionStatus(false);
                 showResult('health-result', `❌ API 상태 확인 실패: ${error.message}`, true);
+            }
+        }
+
+        function updateConnectionStatus(isConnected) {
+            const statusElement = document.getElementById('connection-status');
+            if (!statusElement) {
+                const statusDiv = document.createElement('div');
+                statusDiv.id = 'connection-status';
+                statusDiv.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    padding: 8px 12px;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    z-index: 1000;
+                `;
+                document.body.appendChild(statusDiv);
+                statusElement = document.getElementById('connection-status');
+            }
+
+            if (isConnected) {
+                statusElement.style.backgroundColor = '#d4edda';
+                statusElement.style.color = '#155724';
+                statusElement.innerHTML = '🟢 API 연결됨';
+            } else {
+                statusElement.style.backgroundColor = '#f8d7da';
+                statusElement.style.color = '#721c24';
+                statusElement.innerHTML = '🔴 API 연결 안됨';
             }
         }
 
@@ -307,8 +348,12 @@
             }
         }
 
-        // Check health on page load
-        window.addEventListener('load', checkHealth);
+        // Check health on page load and periodically
+        window.addEventListener('load', () => {
+            checkHealth();
+            // Check health every 30 seconds
+            setInterval(checkHealth, 30000);
+        });
     </script>
 </body>
 </html>
