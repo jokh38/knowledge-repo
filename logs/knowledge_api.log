@@ -1,0 +1,16 @@
+2025-10-09 12:57:46,837 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 13:05:07,763 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 13:08:34,309 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 13:10:34,473 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 13:11:56,282 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 13:11:57,519 - request - INFO - Request: GET http://localhost:8000/health from 127.0.0.1
+2025-10-09 13:11:57,521 - response - INFO - Response: 200 in 0.002s
+2025-10-09 13:46:41,711 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 13:47:32,253 - request - INFO - Request: GET http://10.243.15.166:8000/docs from 10.243.58.143
+2025-10-09 13:47:32,254 - response - INFO - Response: 200 in 0.002s
+2025-10-09 13:47:32,617 - request - INFO - Request: GET http://10.243.15.166:8000/openapi.json from 10.243.58.143
+2025-10-09 13:47:32,638 - response - INFO - Response: 200 in 0.021s
+2025-10-09 13:47:54,089 - request - INFO - Request: GET http://10.243.15.166:8000/health from 10.243.58.143
+2025-10-09 13:47:54,091 - response - INFO - Response: 200 in 0.002s
+2025-10-09 13:47:54,124 - request - INFO - Request: GET http://10.243.15.166:8000/favicon.ico from 10.243.58.143
+2025-10-09 13:47:54,126 - response - INFO - Response: 404 in 0.002s

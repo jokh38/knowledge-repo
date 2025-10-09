@@ -8,7 +8,13 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(OBSIDIAN_VAULT_PATH=/home/jokh38/Documents/ObsidianVault timeout 5 python3 main.py)"
+      "Bash(OBSIDIAN_VAULT_PATH=/home/jokh38/Documents/ObsidianVault timeout 5 python3 main.py)",
+      "Bash(conda:*)",
+      "Read(//home/jokh38/Documents/**)",
+      "Bash(./start.sh:*)",
+      "Bash(pkill:*)",
+      "Bash(curl:*)",
+      "Bash(git config:*)"
     ],
     "deny": [],
     "ask": []
