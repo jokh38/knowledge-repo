@@ -6,7 +6,11 @@ from dotenv import load_dotenv
 import time
 import os
 import logging
+import warnings
 from typing import Optional
+
+# Suppress specific deprecation warnings
+warnings.filterwarnings('ignore', category=UserWarning, module='pydantic._internal._generate_schema')
 
 # Load environment variables FIRST
 load_dotenv()
