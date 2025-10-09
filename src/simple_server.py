@@ -10,7 +10,7 @@ import webbrowser
 from pathlib import Path
 
 PORT = 7860
-DIRECTORY = Path(__file__).parent
+DIRECTORY = Path(__file__).parent.parent  # Serve from project root, not src/
 
 class CustomHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):

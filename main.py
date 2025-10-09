@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, HttpUrl
 from dotenv import load_dotenv
 import time
@@ -43,6 +44,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Static files serving
+@app.get("/simple_ui.html", response_class=FileResponse)
+async def serve_simple_ui():
+    """Serve the simple UI HTML file"""
+    return FileResponse("simple_ui.html")
 
 # Request logging middleware
 @app.middleware("http")
