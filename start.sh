@@ -87,7 +87,7 @@ sleep 3
 
 # Start Simple Web UI (instead of problematic gradio)
 print_status "Starting Simple Web UI on port 7860..."
-python3 simple_server.py &
+python3 src/simple_server.py &
 UI_PID=$!
 
 # Function to cleanup on exit

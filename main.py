@@ -5,9 +5,13 @@ from pydantic import BaseModel, HttpUrl
 from dotenv import load_dotenv
 import time
 import os
+import sys
 import logging
 import warnings
 from typing import Optional
+
+# Add project root to Python path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Suppress specific deprecation warnings
 warnings.filterwarnings('ignore', category=UserWarning, module='pydantic._internal._generate_schema')
@@ -16,12 +20,9 @@ warnings.filterwarnings('ignore', category=UserWarning, module='pydantic._intern
 load_dotenv()
 
 # Import modules AFTER loading environment variables
-import scraper
-import summarizer
-import obsidian_writer
-import retriever
-from auth import verify_token, optional_auth
-from logging_config import setup_logging, log_request_info, log_response_info, log_error, log_api_call
+from src import scraper, summarizer, obsidian_writer, retriever
+from src.auth import verify_token, optional_auth
+from src.logging_config import setup_logging, log_request_info, log_response_info, log_error, log_api_call
 
 # Setup logging
 setup_logging()
