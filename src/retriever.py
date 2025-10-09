@@ -8,6 +8,7 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core.storage.storage_context import StorageContext
 import chromadb
 import os
+import time
 from pathlib import Path
 import logging
 from typing import Dict, List, Optional
@@ -234,25 +235,61 @@ def query_vault(query_text: str, top_k: int = 5):
 @retry(max_attempts=2, delay=1)
 def incremental_index(file_path: str):
     """Index a single file (for new captures)"""
+    index_start = time.time()
+    logger.info(f"[INDEXER] Starting incremental indexing for: {file_path}")
 
     try:
+        logger.debug(f"[INDEXER] Step 1: Getting vector store")
+        vector_store_start = time.time()
         vector_store = get_vector_store()
+        vector_store_duration = time.time() - vector_store_start
+        logger.debug(f"[INDEXER] Vector store obtained in {vector_store_duration:.2f}s")
+
+        logger.debug(f"[INDEXER] Step 2: Creating storage context")
         storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
+        logger.debug(f"[INDEXER] Step 3: Loading documents from file")
+        reader_start = time.time()
         reader = SimpleDirectoryReader(input_files=[file_path])
         documents = reader.load_data()
+        reader_duration = time.time() - reader_start
+        logger.debug(f"[INDEXER] Documents loaded in {reader_duration:.2f}s: {len(documents)} docs")
 
         if not documents:
-            logger.warning(f"No documents found in file: {file_path}")
+            logger.warning(f"[INDEXER] No documents found in file: {file_path}")
             return
 
+        logger.debug(f"[INDEXER] Step 4: Creating index from vector store")
+        index_creation_start = time.time()
         index = VectorStoreIndex.from_vector_store(vector_store)
-        for doc in documents:
-            index.insert(doc)
+        index_creation_duration = time.time() - index_creation_start
+        logger.debug(f"[INDEXER] Index created in {index_creation_duration:.2f}s")
 
-        logger.info(f"Indexed new file: {file_path}")
+        logger.debug(f"[INDEXER] Step 5: Inserting documents into index")
+        insert_start = time.time()
+        for i, doc in enumerate(documents):
+            logger.debug(f"[INDEXER] Inserting document {i+1}/{len(documents)}")
+            index.insert(doc)
+        insert_duration = time.time() - insert_start
+        logger.debug(f"[INDEXER] Documents inserted in {insert_duration:.2f}s")
+
+        total_duration = time.time() - index_start
+        logger.info(f"[INDEXER] Successfully indexed file {file_path} in {total_duration:.2f}s")
+
     except Exception as e:
-        logger.error(f"Error indexing file {file_path}: {str(e)}")
+        total_duration = time.time() - index_start
+        logger.error(f"[INDEXER] Indexing failed after {total_duration:.2f}s: {type(e).__name__}: {str(e)}")
+
+        # Detailed network error analysis
+        error_str = str(e).lower()
+        if "connection" in error_str or "network" in error_str:
+            logger.error(f"[INDEXER] Network connection error during indexing: {e}")
+        elif "timeout" in error_str:
+            logger.error(f"[INDEXER] Timeout error during indexing: {e}")
+        elif "context_window" in error_str:
+            logger.error(f"[INDEXER] LLM metadata error during indexing: {e}")
+
+        logger.error(f"[INDEXER] Indexing error traceback: {traceback.format_exc()}")
         raise
 
 def remove_from_index(file_path: str):

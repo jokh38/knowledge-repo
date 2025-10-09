@@ -138,38 +138,72 @@ async def capture_url(request: CaptureRequest, token: str = Depends(verify_token
         log_api_call("/capture", {"url": str(request.url), "method": request.method})
 
         # Step 1: Scrape content
-        logger.debug(f"[DEBUG] Step 1: Starting URL scraping")
-        scraped = scraper.scrape_url(str(request.url), request.method)
-        logger.debug(f"[DEBUG] Scraping completed successfully")
-        logger.debug(f"[DEBUG] Scraped title: {scraped.get('title', 'N/A')}")
-        logger.debug(f"[DEBUG] Scraped content length: {len(scraped.get('content', ''))}")
+        logger.info(f"[CAPTURE] Step 1/4: Starting URL scraping for {request.url}")
+        scrape_start = time.time()
+        try:
+            logger.debug(f"[CAPTURE] Calling scraper.scrape_url() with method: {request.method}")
+            scraped = scraper.scrape_url(str(request.url), request.method)
+            scrape_duration = time.time() - scrape_start
+            logger.info(f"[CAPTURE] Scraping completed successfully in {scrape_duration:.2f}s")
+            logger.debug(f"[CAPTURE] Scraped title: {scraped.get('title', 'N/A')}")
+            logger.debug(f"[CAPTURE] Scraped content length: {len(scraped.get('content', ''))} characters")
+        except Exception as e:
+            scrape_duration = time.time() - scrape_start
+            logger.error(f"[CAPTURE] Scraping failed after {scrape_duration:.2f}s: {type(e).__name__}: {str(e)}")
+            raise
 
         # Step 2: Summarize
-        logger.debug(f"[DEBUG] Step 2: Starting content summarization")
-        result = summarizer.summarize_content(scraped['content'])
-        logger.debug(f"[DEBUG] Summarization completed successfully")
-        logger.debug(f"[DEBUG] Summary length: {len(result.get('summary', ''))}")
-        logger.debug(f"[DEBUG] Model used: {result.get('model', 'Unknown')}")
+        logger.info(f"[CAPTURE] Step 2/4: Starting content summarization")
+        summarize_start = time.time()
+        try:
+            logger.debug(f"[CAPTURE] Calling summarizer.summarize_content() with {len(scraped.get('content', ''))} characters")
+            result = summarizer.summarize_content(scraped['content'])
+            summarize_duration = time.time() - summarize_start
+            logger.info(f"[CAPTURE] Summarization completed successfully in {summarize_duration:.2f}s")
+            logger.debug(f"[CAPTURE] Summary length: {len(result.get('summary', ''))} characters")
+            logger.debug(f"[CAPTURE] Model used: {result.get('model', 'Unknown')}")
+        except Exception as e:
+            summarize_duration = time.time() - summarize_start
+            logger.error(f"[CAPTURE] Summarization failed after {summarize_duration:.2f}s: {type(e).__name__}: {str(e)}")
+            # Check if it's a network-related error
+            if "network" in str(e).lower() or "connection" in str(e).lower() or "timeout" in str(e).lower():
+                logger.error(f"[CAPTURE] Network-related error detected during summarization: {e}")
+            raise
 
         # Step 3: Save to Obsidian
-        logger.debug(f"[DEBUG] Step 3: Saving to Obsidian vault")
-        file_path = obsidian_writer.save_to_obsidian(
-            url=scraped['url'],
-            title=scraped['title'],
-            content=scraped['content'],
-            summary=result['summary']
-        )
-        logger.debug(f"[DEBUG] File saved to: {file_path}")
+        logger.info(f"[CAPTURE] Step 3/4: Saving to Obsidian vault")
+        save_start = time.time()
+        try:
+            logger.debug(f"[CAPTURE] Calling obsidian_writer.save_to_obsidian()")
+            file_path = obsidian_writer.save_to_obsidian(
+                url=scraped['url'],
+                title=scraped['title'],
+                content=scraped['content'],
+                summary=result['summary']
+            )
+            save_duration = time.time() - save_start
+            logger.info(f"[CAPTURE] File saved successfully in {save_duration:.2f}s: {file_path}")
+        except Exception as e:
+            save_duration = time.time() - save_start
+            logger.error(f"[CAPTURE] File saving failed after {save_duration:.2f}s: {type(e).__name__}: {str(e)}")
+            raise
 
         # Step 4: Add incremental indexing
-        logger.debug(f"[DEBUG] Step 4: Starting incremental indexing")
+        logger.info(f"[CAPTURE] Step 4/4: Starting incremental indexing")
+        index_start = time.time()
         try:
+            logger.debug(f"[CAPTURE] Calling retriever.incremental_index() for file: {file_path}")
             retriever.incremental_index(file_path)
-            logger.info(f"Successfully indexed: {file_path}")
-            logger.debug(f"[DEBUG] Incremental indexing completed")
+            index_duration = time.time() - index_start
+            logger.info(f"[CAPTURE] Incremental indexing completed successfully in {index_duration:.2f}s")
         except Exception as e:
-            logger.warning(f"Failed to index file: {e}")
-            logger.debug(f"[DEBUG] Indexing error details: {type(e).__name__}: {str(e)}")
+            index_duration = time.time() - index_start
+            logger.error(f"[CAPTURE] Indexing failed after {index_duration:.2f}s: {type(e).__name__}: {str(e)}")
+            # Check if it's a network-related error
+            if "network" in str(e).lower() or "connection" in str(e).lower() or "timeout" in str(e).lower():
+                logger.error(f"[CAPTURE] Network-related error detected during indexing: {e}")
+            logger.warning(f"[CAPTURE] Continuing despite indexing failure - file was saved successfully")
+            # Don't raise - we want to return success even if indexing fails
 
         duration = time.time() - start_time
         logger.info(f"Successfully saved to: {file_path} in {duration:.2f}s")

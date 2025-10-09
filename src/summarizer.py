@@ -4,20 +4,32 @@ from typing import Dict
 import logging
 import os
 import json
+import time
 from utils.retry import retry
 
 logger = logging.getLogger(__name__)
 
 def _ollama_chat_via_request(prompt: str, model: str = 'Qwen3-Coder-30B', temperature: float = 0.3) -> str:
     """Fallback Ollama chat using direct HTTP request"""
+    request_start = time.time()
     try:
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        logger.debug(f"[DEBUG] Starting Ollama chat request to {base_url} with model {model}")
-        logger.debug(f"[DEBUG] Prompt length: {len(prompt)} characters")
+        logger.info(f"[SUMMARIZER] Starting LLM request to {base_url} with model {model}")
+        logger.debug(f"[SUMMARIZER] Prompt length: {len(prompt)} characters")
+
+        # Test connectivity first
+        logger.debug(f"[SUMMARIZER] Testing connectivity to {base_url}")
+        try:
+            test_response = requests.get(f"{base_url}/health", timeout=5) if base_url.endswith(":8080") else requests.get(f"{base_url}/api/tags", timeout=5)
+            logger.debug(f"[SUMMARIZER] Connectivity test successful: {test_response.status_code}")
+        except Exception as connectivity_error:
+            logger.warning(f"[SUMMARIZER] Connectivity test failed: {type(connectivity_error).__name__}: {str(connectivity_error)}")
+            if "connection" in str(connectivity_error).lower() or "timeout" in str(connectivity_error).lower():
+                logger.error(f"[SUMMARIZER] Network connection error detected: {connectivity_error}")
 
         # Try OpenAI-compatible endpoint first
         api_url = f"{base_url}/v1/chat/completions"
-        logger.debug(f"[DEBUG] Trying OpenAI-compatible endpoint: {api_url}")
+        logger.info(f"[SUMMARIZER] Trying OpenAI-compatible endpoint: {api_url}")
 
         payload = {
             "model": model,
@@ -26,11 +38,13 @@ def _ollama_chat_via_request(prompt: str, model: str = 'Qwen3-Coder-30B', temper
             ],
             "temperature": temperature
         }
-        logger.debug(f"[DEBUG] Request payload: {payload}")
+        logger.debug(f"[SUMMARIZER] Request payload size: {len(json.dumps(payload))} bytes")
 
+        logger.debug(f"[SUMMARIZER] Sending HTTP POST request (timeout: 60s)")
         response = requests.post(api_url, json=payload, timeout=60)
-        logger.debug(f"[DEBUG] OpenAI endpoint response status: {response.status_code}")
-        logger.debug(f"[DEBUG] OpenAI endpoint response headers: {dict(response.headers)}")
+        request_duration = time.time() - request_start
+        logger.info(f"[SUMMARIZER] Request completed in {request_duration:.2f}s with status {response.status_code}")
+        logger.debug(f"[SUMMARIZER] Response headers: {dict(response.headers)}")
 
         # If OpenAI endpoint fails, try native Ollama endpoint
         if response.status_code != 200:
@@ -98,8 +112,22 @@ def _ollama_chat_via_request(prompt: str, model: str = 'Qwen3-Coder-30B', temper
         raise ValueError(f"Unexpected response format: {data}")
 
     except Exception as e:
-        logger.error(f"[DEBUG] Error in fallback Ollama request: {str(e)}")
-        logger.error(f"[DEBUG] Exception type: {type(e).__name__}")
+        request_duration = time.time() - request_start
+        logger.error(f"[SUMMARIZER] Request failed after {request_duration:.2f}s: {type(e).__name__}: {str(e)}")
+
+        # Detailed network error analysis
+        if isinstance(e, requests.exceptions.ConnectionError):
+            logger.error(f"[SUMMARIZER] Connection error - server may be down or network unreachable")
+        elif isinstance(e, requests.exceptions.Timeout):
+            logger.error(f"[SUMMARIZER] Timeout error - server took too long to respond")
+        elif isinstance(e, requests.exceptions.HTTPError):
+            logger.error(f"[SUMMARIZER] HTTP error - server returned error status")
+        elif "connection" in str(e).lower() or "network" in str(e).lower():
+            logger.error(f"[SUMMARIZER] Network-related error detected: {e}")
+        elif "timeout" in str(e).lower():
+            logger.error(f"[SUMMARIZER] Timeout-related error detected: {e}")
+
+        logger.error(f"[SUMMARIZER] Full error details: {repr(e)}")
         raise
 
 @retry(max_attempts=3, delay=2)
