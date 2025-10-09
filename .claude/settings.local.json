@@ -14,7 +14,10 @@
       "Bash(./start.sh:*)",
       "Bash(pkill:*)",
       "Bash(curl:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(cat:*)",
+      "Bash(chmod:*)",
+      "Bash(netstat:*)"
     ],
     "deny": [],
     "ask": []

@@ -14,3 +14,505 @@
 2025-10-09 13:47:54,091 - response - INFO - Response: 200 in 0.002s
 2025-10-09 13:47:54,124 - request - INFO - Request: GET http://10.243.15.166:8000/favicon.ico from 10.243.58.143
 2025-10-09 13:47:54,126 - response - INFO - Response: 404 in 0.002s
+2025-10-09 13:55:28,526 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 13:57:13,667 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 14:04:54,310 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 14:07:22,669 - request - INFO - Request: GET http://localhost:8000/health from 127.0.0.1
+2025-10-09 14:07:22,670 - response - INFO - Response: 200 in 0.002s
+2025-10-09 14:07:28,060 - request - INFO - Request: POST http://localhost:8000/capture from 127.0.0.1
+2025-10-09 14:07:28,068 - response - INFO - Response: 403 in 0.008s
+2025-10-09 14:07:29,620 - request - INFO - Request: POST http://localhost:8000/capture from 127.0.0.1
+2025-10-09 14:07:29,624 - __main__ - INFO - Capturing URL: https://example.com/
+2025-10-09 14:07:29,624 - api - INFO - API call to /capture with params {'url': 'https://example.com/', 'method': 'auto'} successful
+2025-10-09 14:07:29,625 - root - WARNING - scrape_url_with_bash attempt 1 failed: Firecrawl script not found at: ./scripts/firecrawl-batch.sh. Retrying in 2s...
+2025-10-09 14:07:31,627 - root - WARNING - scrape_url_with_bash attempt 2 failed: Firecrawl script not found at: ./scripts/firecrawl-batch.sh. Retrying in 4s...
+2025-10-09 14:07:35,632 - root - ERROR - scrape_url_with_bash failed after 3 attempts: Firecrawl script not found at: ./scripts/firecrawl-batch.sh
+2025-10-09 14:07:35,633 - scraper - WARNING - Bash method failed: Firecrawl script not found at: ./scripts/firecrawl-batch.sh. Trying Python method...
+2025-10-09 14:07:35,633 - root - WARNING - scrape_url_with_python attempt 1 failed: FIRECRAWL_API_KEY environment variable not set. Retrying in 2s...
+2025-10-09 14:07:37,635 - root - WARNING - scrape_url_with_python attempt 2 failed: FIRECRAWL_API_KEY environment variable not set. Retrying in 4s...
+2025-10-09 14:07:41,640 - root - ERROR - scrape_url_with_python failed after 3 attempts: FIRECRAWL_API_KEY environment variable not set
+2025-10-09 14:07:41,641 - error - ERROR - Error [Capture failed after 12.02s]: FIRECRAWL_API_KEY environment variable not set
+Traceback (most recent call last):
+  File "/home/jokh38/apps/knowledge-repo/scraper.py", line 82, in scrape_url
+    return scrape_url_with_bash(url)
+  File "/home/jokh38/apps/knowledge-repo/utils/retry.py", line 16, in wrapper
+    return func(*args, **kwargs)
+  File "/home/jokh38/apps/knowledge-repo/scraper.py", line 15, in scrape_url_with_bash
+    raise ValueError(f"Firecrawl script not found at: {script_path}")
+ValueError: Firecrawl script not found at: ./scripts/firecrawl-batch.sh
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/jokh38/apps/knowledge-repo/main.py", line 128, in capture_url
+    logger.info(f"Capturing URL: {request.url}")
+  File "/home/jokh38/apps/knowledge-repo/scraper.py", line 85, in scrape_url
+    return scrape_url_with_python(url)
+  File "/home/jokh38/apps/knowledge-repo/utils/retry.py", line 16, in wrapper
+    return func(*args, **kwargs)
+  File "/home/jokh38/apps/knowledge-repo/scraper.py", line 47, in scrape_url_with_python
+    raise ValueError("FIRECRAWL_API_KEY environment variable not set")
+ValueError: FIRECRAWL_API_KEY environment variable not set
+2025-10-09 14:07:41,645 - api - ERROR - API call to /capture with params {'url': 'https://example.com/'} failed: FIRECRAWL_API_KEY environment variable not set
+2025-10-09 14:07:41,646 - response - INFO - Response: 500 in 12.026s
+2025-10-09 14:09:08,205 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 14:09:28,224 - request - INFO - Request: GET http://localhost:8000/health from 127.0.0.1
+2025-10-09 14:09:28,225 - response - INFO - Response: 200 in 0.001s
+2025-10-09 14:09:30,173 - request - INFO - Request: POST http://localhost:8000/capture from 127.0.0.1
+2025-10-09 14:09:30,178 - __main__ - INFO - Capturing URL: https://example.com/
+2025-10-09 14:09:30,178 - api - INFO - API call to /capture with params {'url': 'https://example.com/', 'method': 'bash'} successful
+2025-10-09 14:09:30,559 - scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 14:09:30,559 - root - WARNING - scrape_url_with_bash attempt 1 failed: Firecrawl failed: . Retrying in 2s...
+2025-10-09 14:09:32,908 - scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 14:09:32,908 - root - WARNING - scrape_url_with_bash attempt 2 failed: Firecrawl failed: . Retrying in 4s...
+2025-10-09 14:09:37,213 - scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 14:09:37,214 - root - ERROR - scrape_url_with_bash failed after 3 attempts: Firecrawl failed: 
+2025-10-09 14:09:37,214 - error - ERROR - Error [Capture failed after 7.04s]: Firecrawl failed: 
+Traceback (most recent call last):
+  File "/home/jokh38/apps/knowledge-repo/main.py", line 132, in capture_url
+    scraped = scraper.scrape_url(str(request.url), request.method)
+  File "/home/jokh38/apps/knowledge-repo/scraper.py", line 76, in scrape_url
+    return scrape_url_with_bash(url)
+  File "/home/jokh38/apps/knowledge-repo/utils/retry.py", line 16, in wrapper
+    return func(*args, **kwargs)
+  File "/home/jokh38/apps/knowledge-repo/scraper.py", line 25, in scrape_url_with_bash
+    raise Exception(f"Firecrawl failed: {result.stderr}")
+Exception: Firecrawl failed: 
+2025-10-09 14:09:37,216 - api - ERROR - API call to /capture with params {'url': 'https://example.com/'} failed: Firecrawl failed: 
+2025-10-09 14:09:37,217 - response - INFO - Response: 500 in 7.043s
+2025-10-09 14:10:50,188 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 14:11:07,407 - request - INFO - Request: POST http://localhost:8000/capture from 127.0.0.1
+2025-10-09 14:11:07,410 - __main__ - INFO - Capturing URL: https://example.com/
+2025-10-09 14:11:07,410 - api - INFO - API call to /capture with params {'url': 'https://example.com/', 'method': 'auto'} successful
+2025-10-09 14:11:07,753 - scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 14:11:07,765 - root - WARNING - scrape_url_with_bash attempt 1 failed: Firecrawl failed: . Retrying in 2s...
+2025-10-09 14:11:10,116 - scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 14:11:10,117 - root - WARNING - scrape_url_with_bash attempt 2 failed: Firecrawl failed: . Retrying in 4s...
+2025-10-09 14:11:14,500 - scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 14:11:14,501 - root - ERROR - scrape_url_with_bash failed after 3 attempts: Firecrawl failed: 
+2025-10-09 14:11:14,501 - scraper - WARNING - Bash method failed: Firecrawl failed: . Trying Python method...
+2025-10-09 14:11:14,502 - scraper - ERROR - Error scraping https://example.com/: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:11:14,503 - root - WARNING - scrape_url_with_python attempt 1 failed: 'Firecrawl' object has no attribute 'scrape_url'. Retrying in 2s...
+2025-10-09 14:11:16,505 - scraper - ERROR - Error scraping https://example.com/: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:11:16,506 - root - WARNING - scrape_url_with_python attempt 2 failed: 'Firecrawl' object has no attribute 'scrape_url'. Retrying in 4s...
+2025-10-09 14:11:20,511 - scraper - ERROR - Error scraping https://example.com/: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:11:20,511 - root - ERROR - scrape_url_with_python failed after 3 attempts: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:11:20,511 - scraper - WARNING - Python method failed: 'Firecrawl' object has no attribute 'scrape_url'. Using requests fallback...
+2025-10-09 14:11:27,303 - summarizer - ERROR - Error summarizing content: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.876256372760942}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2025-10-09 14:11:27,304 - root - WARNING - summarize_content attempt 1 failed: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.876256372760942}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing. Retrying in 2s...
+2025-10-09 14:11:35,396 - summarizer - ERROR - Error summarizing content: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...nd': 31.63804734658895}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2025-10-09 14:11:35,397 - root - WARNING - summarize_content attempt 2 failed: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...nd': 31.63804734658895}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing. Retrying in 4s...
+2025-10-09 14:11:45,895 - summarizer - ERROR - Error summarizing content: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.517902168431668}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2025-10-09 14:11:45,896 - root - ERROR - summarize_content failed after 3 attempts: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.517902168431668}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2025-10-09 14:11:45,896 - error - ERROR - Error [Capture failed after 38.49s]: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.517902168431668}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+Traceback (most recent call last):
+  File "/home/jokh38/apps/knowledge-repo/main.py", line 135, in capture_url
+    result = summarizer.summarize_content(scraped['content'])
+  File "/home/jokh38/apps/knowledge-repo/utils/retry.py", line 16, in wrapper
+    return func(*args, **kwargs)
+  File "/home/jokh38/apps/knowledge-repo/summarizer.py", line 42, in summarize_content
+    response = client.chat(
+  File "/home/jokh38/.local/lib/python3.10/site-packages/ollama/_client.py", line 351, in chat
+    return self._request(
+  File "/home/jokh38/.local/lib/python3.10/site-packages/ollama/_client.py", line 189, in _request
+    return cls(**self._request_raw(*args, **kwargs).json())
+  File "/home/jokh38/.local/lib/python3.10/site-packages/pydantic/main.py", line 250, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.517902168431668}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2025-10-09 14:11:45,900 - api - ERROR - API call to /capture with params {'url': 'https://example.com/'} failed: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.517902168431668}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2025-10-09 14:11:45,902 - response - INFO - Response: 500 in 38.495s
+2025-10-09 14:12:47,323 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 14:13:58,687 - request - INFO - Request: POST http://localhost:8000/capture from 127.0.0.1
+2025-10-09 14:13:58,691 - __main__ - INFO - Capturing URL: https://example.com/
+2025-10-09 14:13:58,691 - api - INFO - API call to /capture with params {'url': 'https://example.com/', 'method': 'auto'} successful
+2025-10-09 14:13:59,050 - scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 14:13:59,051 - root - WARNING - scrape_url_with_bash attempt 1 failed: Firecrawl failed: . Retrying in 2s...
+2025-10-09 14:14:01,437 - scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 14:14:01,438 - root - WARNING - scrape_url_with_bash attempt 2 failed: Firecrawl failed: . Retrying in 4s...
+2025-10-09 14:14:05,803 - scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 14:14:05,803 - root - ERROR - scrape_url_with_bash failed after 3 attempts: Firecrawl failed: 
+2025-10-09 14:14:05,803 - scraper - WARNING - Bash method failed: Firecrawl failed: . Trying Python method...
+2025-10-09 14:14:05,804 - scraper - ERROR - Error scraping https://example.com/: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:14:05,804 - root - WARNING - scrape_url_with_python attempt 1 failed: 'Firecrawl' object has no attribute 'scrape_url'. Retrying in 2s...
+2025-10-09 14:14:07,806 - scraper - ERROR - Error scraping https://example.com/: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:14:07,807 - root - WARNING - scrape_url_with_python attempt 2 failed: 'Firecrawl' object has no attribute 'scrape_url'. Retrying in 4s...
+2025-10-09 14:14:11,811 - scraper - ERROR - Error scraping https://example.com/: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:14:11,812 - root - ERROR - scrape_url_with_python failed after 3 attempts: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:14:11,812 - scraper - WARNING - Python method failed: 'Firecrawl' object has no attribute 'scrape_url'. Using requests fallback...
+2025-10-09 14:14:18,581 - summarizer - ERROR - Error summarizing content: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.576427519038436}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2025-10-09 14:14:18,582 - root - WARNING - summarize_content attempt 1 failed: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.576427519038436}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing. Retrying in 2s...
+2025-10-09 14:14:26,522 - summarizer - ERROR - Error summarizing content: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.605481146213997}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2025-10-09 14:14:26,522 - root - WARNING - summarize_content attempt 2 failed: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.605481146213997}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing. Retrying in 4s...
+2025-10-09 14:14:36,853 - summarizer - ERROR - Error summarizing content: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.578462328666703}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2025-10-09 14:14:36,853 - root - ERROR - summarize_content failed after 3 attempts: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.578462328666703}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2025-10-09 14:14:36,854 - error - ERROR - Error [Capture failed after 38.16s]: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.578462328666703}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+Traceback (most recent call last):
+  File "/home/jokh38/apps/knowledge-repo/main.py", line 135, in capture_url
+    result = summarizer.summarize_content(scraped['content'])
+  File "/home/jokh38/apps/knowledge-repo/utils/retry.py", line 16, in wrapper
+    return func(*args, **kwargs)
+  File "/home/jokh38/apps/knowledge-repo/summarizer.py", line 42, in summarize_content
+    response = client.chat(
+  File "/home/jokh38/.local/lib/python3.10/site-packages/ollama/_client.py", line 351, in chat
+    return self._request(
+  File "/home/jokh38/.local/lib/python3.10/site-packages/ollama/_client.py", line 189, in _request
+    return cls(**self._request_raw(*args, **kwargs).json())
+  File "/home/jokh38/.local/lib/python3.10/site-packages/pydantic/main.py", line 250, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.578462328666703}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2025-10-09 14:14:36,857 - api - ERROR - API call to /capture with params {'url': 'https://example.com/'} failed: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.578462328666703}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2025-10-09 14:14:36,858 - response - INFO - Response: 500 in 38.171s
+2025-10-09 14:15:16,077 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 14:15:20,745 - request - INFO - Request: POST http://localhost:8000/capture from 127.0.0.1
+2025-10-09 14:15:20,747 - __main__ - INFO - Capturing URL: https://example.com/
+2025-10-09 14:15:20,748 - api - INFO - API call to /capture with params {'url': 'https://example.com/', 'method': 'auto'} successful
+2025-10-09 14:15:21,129 - scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 14:15:21,130 - root - WARNING - scrape_url_with_bash attempt 1 failed: Firecrawl failed: . Retrying in 2s...
+2025-10-09 14:15:23,524 - scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 14:15:23,525 - root - WARNING - scrape_url_with_bash attempt 2 failed: Firecrawl failed: . Retrying in 4s...
+2025-10-09 14:15:36,918 - scraper - ERROR - Error scraping https://example.com/: Firecrawl failed: 
+2025-10-09 14:15:36,918 - root - ERROR - scrape_url_with_bash failed after 3 attempts: Firecrawl failed: 
+2025-10-09 14:15:36,918 - scraper - WARNING - Bash method failed: Firecrawl failed: . Trying Python method...
+2025-10-09 14:15:36,919 - scraper - ERROR - Error scraping https://example.com/: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:15:36,920 - root - WARNING - scrape_url_with_python attempt 1 failed: 'Firecrawl' object has no attribute 'scrape_url'. Retrying in 2s...
+2025-10-09 14:15:38,923 - scraper - ERROR - Error scraping https://example.com/: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:15:38,923 - root - WARNING - scrape_url_with_python attempt 2 failed: 'Firecrawl' object has no attribute 'scrape_url'. Retrying in 4s...
+2025-10-09 14:15:42,926 - scraper - ERROR - Error scraping https://example.com/: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:15:42,927 - root - ERROR - scrape_url_with_python failed after 3 attempts: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:15:42,927 - scraper - WARNING - Python method failed: 'Firecrawl' object has no attribute 'scrape_url'. Using requests fallback...
+2025-10-09 14:15:49,053 - summarizer - WARNING - Ollama client failed: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.669562078637426}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing. Using fallback HTTP request...
+2025-10-09 14:15:55,332 - obsidian_writer - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Example Domain.md
+2025-10-09 14:15:56,139 - retriever - INFO - Indexed new file: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Example Domain.md
+2025-10-09 14:15:56,140 - __main__ - INFO - Successfully indexed: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Example Domain.md
+2025-10-09 14:15:56,140 - __main__ - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Example Domain.md in 35.39s
+2025-10-09 14:15:56,141 - api - INFO - API call to /capture with params {'url': 'https://example.com/'} successful
+2025-10-09 14:15:56,142 - response - INFO - Response: 200 in 35.398s
+2025-10-09 14:16:31,110 - request - INFO - Request: POST http://localhost:8000/capture from 127.0.0.1
+2025-10-09 14:16:31,113 - __main__ - INFO - Capturing URL: https://httpbin.org/json
+2025-10-09 14:16:31,113 - api - INFO - API call to /capture with params {'url': 'https://httpbin.org/json', 'method': 'auto'} successful
+2025-10-09 14:16:31,500 - scraper - ERROR - Error scraping https://httpbin.org/json: Firecrawl failed: 
+2025-10-09 14:16:31,501 - root - WARNING - scrape_url_with_bash attempt 1 failed: Firecrawl failed: . Retrying in 2s...
+2025-10-09 14:16:34,026 - scraper - ERROR - Error scraping https://httpbin.org/json: Firecrawl failed: 
+2025-10-09 14:16:34,027 - root - WARNING - scrape_url_with_bash attempt 2 failed: Firecrawl failed: . Retrying in 4s...
+2025-10-09 14:16:38,346 - scraper - ERROR - Error scraping https://httpbin.org/json: Firecrawl failed: 
+2025-10-09 14:16:38,346 - root - ERROR - scrape_url_with_bash failed after 3 attempts: Firecrawl failed: 
+2025-10-09 14:16:38,346 - scraper - WARNING - Bash method failed: Firecrawl failed: . Trying Python method...
+2025-10-09 14:16:38,347 - scraper - ERROR - Error scraping https://httpbin.org/json: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:16:38,348 - root - WARNING - scrape_url_with_python attempt 1 failed: 'Firecrawl' object has no attribute 'scrape_url'. Retrying in 2s...
+2025-10-09 14:16:40,350 - scraper - ERROR - Error scraping https://httpbin.org/json: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:16:40,350 - root - WARNING - scrape_url_with_python attempt 2 failed: 'Firecrawl' object has no attribute 'scrape_url'. Retrying in 4s...
+2025-10-09 14:16:44,355 - scraper - ERROR - Error scraping https://httpbin.org/json: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:16:44,356 - root - ERROR - scrape_url_with_python failed after 3 attempts: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:16:44,356 - scraper - WARNING - Python method failed: 'Firecrawl' object has no attribute 'scrape_url'. Using requests fallback...
+2025-10-09 14:16:52,648 - summarizer - WARNING - Ollama client failed: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.315509563680237}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing. Using fallback HTTP request...
+2025-10-09 14:16:57,967 - obsidian_writer - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - json.md
+2025-10-09 14:16:58,034 - retriever - INFO - Indexed new file: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - json.md
+2025-10-09 14:16:58,035 - __main__ - INFO - Successfully indexed: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - json.md
+2025-10-09 14:16:58,035 - __main__ - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - json.md in 26.92s
+2025-10-09 14:16:58,035 - api - INFO - API call to /capture with params {'url': 'https://httpbin.org/json'} successful
+2025-10-09 14:16:58,035 - response - INFO - Response: 200 in 26.926s
+2025-10-09 14:24:25,308 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 14:25:24,874 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 14:25:37,057 - request - INFO - Request: GET http://localhost:8000/health from 127.0.0.1
+2025-10-09 14:25:37,058 - response - INFO - Response: 200 in 0.001s
+2025-10-09 14:30:16,509 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 14:33:26,721 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 14:33:40,628 - request - INFO - Request: GET http://localhost:8000/health from 127.0.0.1
+2025-10-09 14:33:40,629 - response - INFO - Response: 200 in 0.001s
+2025-10-09 14:34:01,671 - request - INFO - Request: POST http://localhost:8000/capture from 127.0.0.1
+2025-10-09 14:34:01,674 - response - INFO - Response: 403 in 0.003s
+2025-10-09 14:34:09,817 - request - INFO - Request: POST http://localhost:8000/capture from 127.0.0.1
+2025-10-09 14:34:09,821 - __main__ - INFO - Capturing URL: https://httpbin.org/json
+2025-10-09 14:34:09,821 - api - INFO - API call to /capture with params {'url': 'https://httpbin.org/json', 'method': 'auto'} successful
+2025-10-09 14:34:10,161 - scraper - ERROR - Error scraping https://httpbin.org/json: Firecrawl failed: 
+2025-10-09 14:34:10,162 - root - WARNING - scrape_url_with_bash attempt 1 failed: Firecrawl failed: . Retrying in 2s...
+2025-10-09 14:34:12,506 - scraper - ERROR - Error scraping https://httpbin.org/json: Firecrawl failed: 
+2025-10-09 14:34:12,506 - root - WARNING - scrape_url_with_bash attempt 2 failed: Firecrawl failed: . Retrying in 4s...
+2025-10-09 14:34:16,894 - scraper - ERROR - Error scraping https://httpbin.org/json: Firecrawl failed: 
+2025-10-09 14:34:16,895 - root - ERROR - scrape_url_with_bash failed after 3 attempts: Firecrawl failed: 
+2025-10-09 14:34:16,895 - scraper - WARNING - Bash method failed: Firecrawl failed: . Trying Python method...
+2025-10-09 14:34:16,896 - scraper - ERROR - Error scraping https://httpbin.org/json: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:34:16,896 - root - WARNING - scrape_url_with_python attempt 1 failed: 'Firecrawl' object has no attribute 'scrape_url'. Retrying in 2s...
+2025-10-09 14:34:18,898 - scraper - ERROR - Error scraping https://httpbin.org/json: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:34:18,899 - root - WARNING - scrape_url_with_python attempt 2 failed: 'Firecrawl' object has no attribute 'scrape_url'. Retrying in 4s...
+2025-10-09 14:34:22,903 - scraper - ERROR - Error scraping https://httpbin.org/json: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:34:22,904 - root - ERROR - scrape_url_with_python failed after 3 attempts: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:34:22,904 - scraper - WARNING - Python method failed: 'Firecrawl' object has no attribute 'scrape_url'. Using requests fallback...
+2025-10-09 14:34:28,881 - summarizer - WARNING - Ollama client failed: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...nd': 31.25820380959947}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing. Using fallback HTTP request...
+2025-10-09 14:34:35,499 - obsidian_writer - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - json.md
+2025-10-09 14:34:36,232 - retriever - INFO - Indexed new file: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - json.md
+2025-10-09 14:34:36,233 - __main__ - INFO - Successfully indexed: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - json.md
+2025-10-09 14:34:36,233 - __main__ - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - json.md in 26.41s
+2025-10-09 14:34:36,233 - api - INFO - API call to /capture with params {'url': 'https://httpbin.org/json'} successful
+2025-10-09 14:34:36,234 - response - INFO - Response: 200 in 26.417s
+2025-10-09 14:34:52,227 - request - INFO - Request: GET http://localhost:8000/health from 127.0.0.1
+2025-10-09 14:34:52,228 - response - INFO - Response: 200 in 0.002s
+2025-10-09 14:35:02,190 - request - INFO - Request: GET http://localhost:8000/health from 127.0.0.1
+2025-10-09 14:35:02,192 - response - INFO - Response: 200 in 0.001s
+2025-10-09 14:35:02,345 - request - INFO - Request: POST http://localhost:8000/query from 127.0.0.1
+2025-10-09 14:35:02,348 - __main__ - INFO - Query: test
+2025-10-09 14:35:02,348 - api - INFO - API call to /query with params {'query': 'test', 'top_k': 3} successful
+2025-10-09 14:35:07,373 - llama_index.core.response_synthesizers.refine - WARNING - Validation error on structured response: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 32.988501205806436}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+Traceback (most recent call last):
+  File "/home/jokh38/.local/lib/python3.10/site-packages/llama_index/core/response_synthesizers/refine.py", line 241, in _give_response_single
+    program(
+  File "/home/jokh38/.local/lib/python3.10/site-packages/llama_index_instrumentation/dispatcher.py", line 335, in wrapper
+    result = func(*args, **kwargs)
+  File "/home/jokh38/.local/lib/python3.10/site-packages/llama_index/core/response_synthesizers/refine.py", line 85, in __call__
+    answer = self._llm.predict(
+  File "/home/jokh38/.local/lib/python3.10/site-packages/llama_index_instrumentation/dispatcher.py", line 335, in wrapper
+    result = func(*args, **kwargs)
+  File "/home/jokh38/.local/lib/python3.10/site-packages/llama_index/core/llms/llm.py", line 623, in predict
+    chat_response = self.chat(messages)
+  File "/home/jokh38/.local/lib/python3.10/site-packages/llama_index_instrumentation/dispatcher.py", line 335, in wrapper
+    result = func(*args, **kwargs)
+  File "/home/jokh38/.local/lib/python3.10/site-packages/llama_index/core/llms/callbacks.py", line 175, in wrapped_llm_chat
+    f_return_val = f(_self, messages, **kwargs)
+  File "/home/jokh38/.local/lib/python3.10/site-packages/llama_index/llms/ollama/base.py", line 347, in chat
+    response = self.client.chat(
+  File "/home/jokh38/.local/lib/python3.10/site-packages/ollama/_client.py", line 351, in chat
+    return self._request(
+  File "/home/jokh38/.local/lib/python3.10/site-packages/ollama/_client.py", line 189, in _request
+    return cls(**self._request_raw(*args, **kwargs).json())
+  File "/home/jokh38/.local/lib/python3.10/site-packages/pydantic/main.py", line 250, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 32.988501205806436}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2025-10-09 14:35:07,379 - __main__ - INFO - Query completed in 5.03s
+2025-10-09 14:35:07,379 - api - INFO - API call to /query with params {'query': 'test'} successful
+2025-10-09 14:35:07,380 - response - INFO - Response: 200 in 5.035s
+2025-10-09 14:35:20,362 - request - INFO - Request: GET http://localhost:8000/health from 127.0.0.1
+2025-10-09 14:35:20,364 - response - INFO - Response: 200 in 0.002s
+2025-10-09 14:35:20,367 - request - INFO - Request: POST http://localhost:8000/capture from 127.0.0.1
+2025-10-09 14:35:20,370 - __main__ - INFO - Capturing URL: https://httpbin.org/json
+2025-10-09 14:35:20,370 - api - INFO - API call to /capture with params {'url': 'https://httpbin.org/json', 'method': 'auto'} successful
+2025-10-09 14:35:20,720 - scraper - ERROR - Error scraping https://httpbin.org/json: Firecrawl failed: 
+2025-10-09 14:35:20,721 - root - WARNING - scrape_url_with_bash attempt 1 failed: Firecrawl failed: . Retrying in 2s...
+2025-10-09 14:35:23,068 - scraper - ERROR - Error scraping https://httpbin.org/json: Firecrawl failed: 
+2025-10-09 14:35:23,068 - root - WARNING - scrape_url_with_bash attempt 2 failed: Firecrawl failed: . Retrying in 4s...
+2025-10-09 14:35:27,485 - scraper - ERROR - Error scraping https://httpbin.org/json: Firecrawl failed: 
+2025-10-09 14:35:27,485 - root - ERROR - scrape_url_with_bash failed after 3 attempts: Firecrawl failed: 
+2025-10-09 14:35:27,485 - scraper - WARNING - Bash method failed: Firecrawl failed: . Trying Python method...
+2025-10-09 14:35:27,486 - scraper - ERROR - Error scraping https://httpbin.org/json: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:35:27,486 - root - WARNING - scrape_url_with_python attempt 1 failed: 'Firecrawl' object has no attribute 'scrape_url'. Retrying in 2s...
+2025-10-09 14:35:29,489 - scraper - ERROR - Error scraping https://httpbin.org/json: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:35:29,489 - root - WARNING - scrape_url_with_python attempt 2 failed: 'Firecrawl' object has no attribute 'scrape_url'. Retrying in 4s...
+2025-10-09 14:35:33,494 - scraper - ERROR - Error scraping https://httpbin.org/json: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:35:33,494 - root - ERROR - scrape_url_with_python failed after 3 attempts: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:35:33,495 - scraper - WARNING - Python method failed: 'Firecrawl' object has no attribute 'scrape_url'. Using requests fallback...
+2025-10-09 14:35:41,366 - summarizer - WARNING - Ollama client failed: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.624102763930924}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing. Using fallback HTTP request...
+2025-10-09 14:35:47,141 - obsidian_writer - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - json.md
+2025-10-09 14:35:47,201 - retriever - INFO - Indexed new file: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - json.md
+2025-10-09 14:35:47,201 - __main__ - INFO - Successfully indexed: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - json.md
+2025-10-09 14:35:47,201 - __main__ - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - json.md in 26.83s
+2025-10-09 14:35:47,202 - api - INFO - API call to /capture with params {'url': 'https://httpbin.org/json'} successful
+2025-10-09 14:35:47,202 - response - INFO - Response: 200 in 26.835s
+2025-10-09 14:35:47,208 - request - INFO - Request: POST http://localhost:8000/query from 127.0.0.1
+2025-10-09 14:35:47,210 - __main__ - INFO - Query: test
+2025-10-09 14:35:47,210 - api - INFO - API call to /query with params {'query': 'test', 'top_k': 3} successful
+2025-10-09 14:35:54,112 - llama_index.core.response_synthesizers.refine - WARNING - Validation error on structured response: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.590606511516395}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+Traceback (most recent call last):
+  File "/home/jokh38/.local/lib/python3.10/site-packages/llama_index/core/response_synthesizers/refine.py", line 241, in _give_response_single
+    program(
+  File "/home/jokh38/.local/lib/python3.10/site-packages/llama_index_instrumentation/dispatcher.py", line 335, in wrapper
+    result = func(*args, **kwargs)
+  File "/home/jokh38/.local/lib/python3.10/site-packages/llama_index/core/response_synthesizers/refine.py", line 85, in __call__
+    answer = self._llm.predict(
+  File "/home/jokh38/.local/lib/python3.10/site-packages/llama_index_instrumentation/dispatcher.py", line 335, in wrapper
+    result = func(*args, **kwargs)
+  File "/home/jokh38/.local/lib/python3.10/site-packages/llama_index/core/llms/llm.py", line 623, in predict
+    chat_response = self.chat(messages)
+  File "/home/jokh38/.local/lib/python3.10/site-packages/llama_index_instrumentation/dispatcher.py", line 335, in wrapper
+    result = func(*args, **kwargs)
+  File "/home/jokh38/.local/lib/python3.10/site-packages/llama_index/core/llms/callbacks.py", line 175, in wrapped_llm_chat
+    f_return_val = f(_self, messages, **kwargs)
+  File "/home/jokh38/.local/lib/python3.10/site-packages/llama_index/llms/ollama/base.py", line 347, in chat
+    response = self.client.chat(
+  File "/home/jokh38/.local/lib/python3.10/site-packages/ollama/_client.py", line 351, in chat
+    return self._request(
+  File "/home/jokh38/.local/lib/python3.10/site-packages/ollama/_client.py", line 189, in _request
+    return cls(**self._request_raw(*args, **kwargs).json())
+  File "/home/jokh38/.local/lib/python3.10/site-packages/pydantic/main.py", line 250, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 1 validation error for ChatResponse
+message
+  Field required [type=missing, input_value={'choices': [{'finish_rea...d': 31.590606511516395}}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2025-10-09 14:35:54,114 - __main__ - INFO - Query completed in 6.90s
+2025-10-09 14:35:54,114 - api - INFO - API call to /query with params {'query': 'test'} successful
+2025-10-09 14:35:54,115 - response - INFO - Response: 200 in 6.907s
+2025-10-09 14:36:34,759 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 14:49:32,882 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 14:52:35,008 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 14:53:45,767 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 14:54:03,969 - request - INFO - Request: POST http://localhost:8000/capture from 127.0.0.1
+2025-10-09 14:54:03,972 - __main__ - INFO - Capturing URL: https://httpbin.org/json
+2025-10-09 14:54:03,972 - api - INFO - API call to /capture with params {'url': 'https://httpbin.org/json', 'method': 'auto'} successful
+2025-10-09 14:54:04,379 - scraper - ERROR - Error scraping https://httpbin.org/json: Firecrawl failed: 
+2025-10-09 14:54:04,380 - root - WARNING - scrape_url_with_bash attempt 1 failed: Firecrawl failed: . Retrying in 2s...
+2025-10-09 14:54:06,771 - scraper - ERROR - Error scraping https://httpbin.org/json: Firecrawl failed: 
+2025-10-09 14:54:06,772 - root - WARNING - scrape_url_with_bash attempt 2 failed: Firecrawl failed: . Retrying in 4s...
+2025-10-09 14:54:11,082 - scraper - ERROR - Error scraping https://httpbin.org/json: Firecrawl failed: 
+2025-10-09 14:54:11,083 - root - ERROR - scrape_url_with_bash failed after 3 attempts: Firecrawl failed: 
+2025-10-09 14:54:11,083 - scraper - WARNING - Bash method failed: Firecrawl failed: . Trying Python method...
+2025-10-09 14:54:11,084 - scraper - ERROR - Error scraping https://httpbin.org/json: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:54:11,084 - root - WARNING - scrape_url_with_python attempt 1 failed: 'Firecrawl' object has no attribute 'scrape_url'. Retrying in 2s...
+2025-10-09 14:54:13,087 - scraper - ERROR - Error scraping https://httpbin.org/json: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:54:13,087 - root - WARNING - scrape_url_with_python attempt 2 failed: 'Firecrawl' object has no attribute 'scrape_url'. Retrying in 4s...
+2025-10-09 14:54:17,092 - scraper - ERROR - Error scraping https://httpbin.org/json: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:54:17,093 - root - ERROR - scrape_url_with_python failed after 3 attempts: 'Firecrawl' object has no attribute 'scrape_url'
+2025-10-09 14:54:17,093 - scraper - WARNING - Python method failed: 'Firecrawl' object has no attribute 'scrape_url'. Using requests fallback...
+2025-10-09 14:54:30,330 - obsidian_writer - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - json.md
+2025-10-09 14:54:31,082 - retriever - INFO - Indexed new file: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - json.md
+2025-10-09 14:54:31,082 - __main__ - INFO - Successfully indexed: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - json.md
+2025-10-09 14:54:31,082 - __main__ - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - json.md in 27.11s
+2025-10-09 14:54:31,083 - api - INFO - API call to /capture with params {'url': 'https://httpbin.org/json'} successful
+2025-10-09 14:54:31,083 - response - INFO - Response: 200 in 27.114s
+2025-10-09 14:56:26,965 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 15:02:37,970 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 15:02:50,714 - request - INFO - Request: POST http://localhost:8000/capture from 127.0.0.1
+2025-10-09 15:02:50,717 - __main__ - INFO - Capturing URL: https://discuss.pytorch.kr/t/turbo-flow-claude-v1-0-1-alpha-ai/7917
+2025-10-09 15:02:50,717 - api - INFO - API call to /capture with params {'url': 'https://discuss.pytorch.kr/t/turbo-flow-claude-v1-0-1-alpha-ai/7917', 'method': None} successful
+2025-10-09 15:02:51,095 - scraper - ERROR - Error scraping https://discuss.pytorch.kr/t/turbo-flow-claude-v1-0-1-alpha-ai/7917: Firecrawl failed: 
+2025-10-09 15:02:51,096 - root - WARNING - scrape_url_with_bash attempt 1 failed: Firecrawl failed: . Retrying in 2s...
+2025-10-09 15:02:53,445 - scraper - ERROR - Error scraping https://discuss.pytorch.kr/t/turbo-flow-claude-v1-0-1-alpha-ai/7917: Firecrawl failed: 
+2025-10-09 15:02:53,445 - root - WARNING - scrape_url_with_bash attempt 2 failed: Firecrawl failed: . Retrying in 4s...
+2025-10-09 15:02:57,800 - scraper - ERROR - Error scraping https://discuss.pytorch.kr/t/turbo-flow-claude-v1-0-1-alpha-ai/7917: Firecrawl failed: 
+2025-10-09 15:02:57,800 - root - ERROR - scrape_url_with_bash failed after 3 attempts: Firecrawl failed: 
+2025-10-09 15:02:57,800 - scraper - WARNING - Bash method failed: Firecrawl failed: . Trying Python method...
+2025-10-09 15:02:57,801 - scraper - WARNING - scrape_url method not found, trying alternative...
+2025-10-09 15:02:57,801 - scraper - ERROR - Alternative Firecrawl method failed: 'Firecrawl' object has no attribute 'sync_scrape_url'
+2025-10-09 15:02:57,801 - root - WARNING - scrape_url_with_python attempt 1 failed: Firecrawl API method not available: 'Firecrawl' object has no attribute 'sync_scrape_url'. Retrying in 2s...
+2025-10-09 15:02:59,804 - scraper - WARNING - scrape_url method not found, trying alternative...
+2025-10-09 15:02:59,804 - scraper - ERROR - Alternative Firecrawl method failed: 'Firecrawl' object has no attribute 'sync_scrape_url'
+2025-10-09 15:02:59,805 - root - WARNING - scrape_url_with_python attempt 2 failed: Firecrawl API method not available: 'Firecrawl' object has no attribute 'sync_scrape_url'. Retrying in 4s...
+2025-10-09 15:03:03,809 - scraper - WARNING - scrape_url method not found, trying alternative...
+2025-10-09 15:03:03,810 - scraper - ERROR - Alternative Firecrawl method failed: 'Firecrawl' object has no attribute 'sync_scrape_url'
+2025-10-09 15:03:03,810 - root - ERROR - scrape_url_with_python failed after 3 attempts: Firecrawl API method not available: 'Firecrawl' object has no attribute 'sync_scrape_url'
+2025-10-09 15:03:03,810 - scraper - WARNING - Python method failed: Firecrawl API method not available: 'Firecrawl' object has no attribute 'sync_scrape_url'. Using requests fallback...
+2025-10-09 15:03:12,427 - obsidian_writer - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Turbo-Flow Claude v101 Alpha AI 기반 에이전틱 개발 환경 - 읽을.md
+2025-10-09 15:03:13,181 - retriever - INFO - Indexed new file: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Turbo-Flow Claude v101 Alpha AI 기반 에이전틱 개발 환경 - 읽을.md
+2025-10-09 15:03:13,181 - __main__ - INFO - Successfully indexed: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Turbo-Flow Claude v101 Alpha AI 기반 에이전틱 개발 환경 - 읽을.md
+2025-10-09 15:03:13,181 - __main__ - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Turbo-Flow Claude v101 Alpha AI 기반 에이전틱 개발 환경 - 읽을.md in 22.46s
+2025-10-09 15:03:13,181 - api - INFO - API call to /capture with params {'url': 'https://discuss.pytorch.kr/t/turbo-flow-claude-v1-0-1-alpha-ai/7917'} successful
+2025-10-09 15:03:13,182 - response - INFO - Response: 200 in 22.468s
+2025-10-09 15:04:29,292 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 15:06:47,534 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 15:06:51,429 - request - INFO - Request: GET http://localhost:8000/health from 127.0.0.1
+2025-10-09 15:06:51,430 - response - INFO - Response: 200 in 0.002s
+2025-10-09 15:07:07,101 - request - INFO - Request: POST http://localhost:8000/capture from 127.0.0.1
+2025-10-09 15:07:07,105 - response - INFO - Response: 403 in 0.004s
+2025-10-09 15:07:09,778 - request - INFO - Request: GET http://localhost:8000/health from 127.0.0.1
+2025-10-09 15:07:09,780 - response - INFO - Response: 200 in 0.002s
+2025-10-09 15:07:15,497 - request - INFO - Request: POST http://localhost:8000/capture from 127.0.0.1
+2025-10-09 15:07:15,501 - __main__ - INFO - Capturing URL: https://discuss.pytorch.kr/t/turbo-flow-claude-v1-0-1-alpha-ai/7917
+2025-10-09 15:07:15,502 - api - INFO - API call to /capture with params {'url': 'https://discuss.pytorch.kr/t/turbo-flow-claude-v1-0-1-alpha-ai/7917', 'method': 'auto'} successful
+2025-10-09 15:07:15,844 - scraper - ERROR - Error scraping https://discuss.pytorch.kr/t/turbo-flow-claude-v1-0-1-alpha-ai/7917: Firecrawl failed: 
+2025-10-09 15:07:15,844 - root - WARNING - scrape_url_with_bash attempt 1 failed: Firecrawl failed: . Retrying in 2s...
+2025-10-09 15:07:18,161 - scraper - ERROR - Error scraping https://discuss.pytorch.kr/t/turbo-flow-claude-v1-0-1-alpha-ai/7917: Firecrawl failed: 
+2025-10-09 15:07:18,162 - root - WARNING - scrape_url_with_bash attempt 2 failed: Firecrawl failed: . Retrying in 4s...
+2025-10-09 15:07:22,568 - scraper - ERROR - Error scraping https://discuss.pytorch.kr/t/turbo-flow-claude-v1-0-1-alpha-ai/7917: Firecrawl failed: 
+2025-10-09 15:07:22,569 - root - ERROR - scrape_url_with_bash failed after 3 attempts: Firecrawl failed: 
+2025-10-09 15:07:22,569 - scraper - WARNING - Bash method failed: Firecrawl failed: . Trying Python method...
+2025-10-09 15:07:22,569 - scraper - ERROR - Error scraping https://discuss.pytorch.kr/t/turbo-flow-claude-v1-0-1-alpha-ai/7917: FirecrawlClient.scrape() got an unexpected keyword argument 'params'
+2025-10-09 15:07:22,570 - root - WARNING - scrape_url_with_python attempt 1 failed: FirecrawlClient.scrape() got an unexpected keyword argument 'params'. Retrying in 2s...
+2025-10-09 15:07:24,572 - scraper - ERROR - Error scraping https://discuss.pytorch.kr/t/turbo-flow-claude-v1-0-1-alpha-ai/7917: FirecrawlClient.scrape() got an unexpected keyword argument 'params'
+2025-10-09 15:07:24,573 - root - WARNING - scrape_url_with_python attempt 2 failed: FirecrawlClient.scrape() got an unexpected keyword argument 'params'. Retrying in 4s...
+2025-10-09 15:07:28,577 - scraper - ERROR - Error scraping https://discuss.pytorch.kr/t/turbo-flow-claude-v1-0-1-alpha-ai/7917: FirecrawlClient.scrape() got an unexpected keyword argument 'params'
+2025-10-09 15:07:28,578 - root - ERROR - scrape_url_with_python failed after 3 attempts: FirecrawlClient.scrape() got an unexpected keyword argument 'params'
+2025-10-09 15:07:28,578 - scraper - WARNING - Python method failed: FirecrawlClient.scrape() got an unexpected keyword argument 'params'. Using requests fallback...
+2025-10-09 15:07:36,449 - obsidian_writer - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Turbo-Flow Claude v101 Alpha AI 기반 에이전틱 개발 환경 - 읽을.md
+2025-10-09 15:07:37,195 - retriever - INFO - Indexed new file: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Turbo-Flow Claude v101 Alpha AI 기반 에이전틱 개발 환경 - 읽을.md
+2025-10-09 15:07:37,196 - __main__ - INFO - Successfully indexed: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Turbo-Flow Claude v101 Alpha AI 기반 에이전틱 개발 환경 - 읽을.md
+2025-10-09 15:07:37,196 - __main__ - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Turbo-Flow Claude v101 Alpha AI 기반 에이전틱 개발 환경 - 읽을.md in 21.70s
+2025-10-09 15:07:37,197 - api - INFO - API call to /capture with params {'url': 'https://discuss.pytorch.kr/t/turbo-flow-claude-v1-0-1-alpha-ai/7917'} successful
+2025-10-09 15:07:37,198 - response - INFO - Response: 200 in 21.701s
+2025-10-09 15:07:59,444 - request - INFO - Request: POST http://localhost:8000/capture from 127.0.0.1
+2025-10-09 15:07:59,447 - __main__ - INFO - Capturing URL: https://example.com/
+2025-10-09 15:07:59,448 - api - INFO - API call to /capture with params {'url': 'https://example.com/', 'method': 'requests'} successful
+2025-10-09 15:08:05,788 - obsidian_writer - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Example Domain.md
+2025-10-09 15:08:05,860 - retriever - INFO - Indexed new file: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Example Domain.md
+2025-10-09 15:08:05,861 - __main__ - INFO - Successfully indexed: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Example Domain.md
+2025-10-09 15:08:05,861 - __main__ - INFO - Successfully saved to: /home/jokh38/Documents/ObsidianVault/00_Inbox/Clippings/2025-10-09 - Example Domain.md in 6.41s
+2025-10-09 15:08:05,861 - api - INFO - API call to /capture with params {'url': 'https://example.com/'} successful
+2025-10-09 15:08:05,862 - response - INFO - Response: 200 in 6.418s
+2025-10-09 15:12:54,290 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 15:16:23,528 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-09 15:16:28,047 - request - INFO - Request: GET http://localhost:8000/health from 127.0.0.1
+2025-10-09 15:16:28,048 - response - INFO - Response: 200 in 0.002s
+2025-10-09 15:16:28,232 - request - INFO - Request: GET http://localhost:8000/ from 127.0.0.1
+2025-10-09 15:16:28,234 - response - INFO - Response: 200 in 0.001s
