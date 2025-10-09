@@ -90,6 +90,37 @@
             color: #007bff;
             font-style: italic;
         }
+        .loading-detailed {
+            display: none;
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .progress-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .status-message {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .status-details {
+            font-size: 12px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -98,9 +129,8 @@
         <p style="text-align: center; color: #666; margin-bottom: 30px;">
             웹 페이지를 요약하여 Obsidian에 저장하고 의미론적 검색을 수행합니다.
         </p>
-        <div style="background-color: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 4px; padding: 10px; margin-bottom: 20px; font-size: 12px;">
-            <strong>ℹ️ 팁:</strong> API 서버가 실행 중인지 확인하세요. 터미널에서 <code>python3 main.py</code>를 실행하여 서버를 시작할 수 있습니다.
-            API 서버는 <code>http://localhost:8000</code>에서 실행됩니다.
+        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 10px; margin-bottom: 20px; font-size: 12px;">
+            <strong>⚠️ 중요:</strong> LLM 요약 처리는 최대 1-2분 정도 소요될 수 있습니다. 처리 중에는 잠시 기다려주세요.
         </div>
 
         <div class="tabs">
@@ -126,6 +156,11 @@
             </div>
             <button onclick="captureUrl()">캡처</button>
             <div id="capture-loading" class="loading">캡처 중...</div>
+            <div id="capture-loading-detailed" class="loading-detailed">
+                <div class="progress-spinner"></div>
+                <div class="status-message" id="capture-status-message">처리 시작 중...</div>
+                <div class="status-details" id="capture-status-details">잠시만 기다려주세요</div>
+            </div>
             <div id="capture-result"></div>
         </div>
 
@@ -143,6 +178,11 @@
             </div>
             <button onclick="queryKnowledge()">검색</button>
             <div id="query-loading" class="loading">검색 중...</div>
+            <div id="query-loading-detailed" class="loading-detailed">
+                <div class="progress-spinner"></div>
+                <div class="status-message" id="query-status-message">검색 처리 중...</div>
+                <div class="status-details" id="query-status-details">관련 정보를 찾는 중입니다</div>
+            </div>
             <div id="query-result"></div>
         </div>
 
@@ -225,6 +265,44 @@
             document.getElementById(elementId).style.display = show ? 'block' : 'none';
         }
 
+        function showDetailedLoading(baseId, show = true, message = '', details = '') {
+            const detailedElement = document.getElementById(`${baseId}-loading-detailed`);
+            const messageElement = document.getElementById(`${baseId}-status-message`);
+            const detailsElement = document.getElementById(`${baseId}-status-details`);
+
+            if (show) {
+                detailedElement.style.display = 'block';
+                if (message) messageElement.textContent = message;
+                if (details) detailsElement.textContent = details;
+            } else {
+                detailedElement.style.display = 'none';
+            }
+        }
+
+        async function updateProcessingStage(baseId, stage, details = '') {
+            const stages = {
+                'capture': {
+                    'scraping': { message: '🔄 웹 페이지 스크래핑 중...', details: '콘텐츠를 추출하고 있습니다' },
+                    'analyzing': { message: '📄 콘텐츠 분석 중...', details: '텍스트를 처리하고 있습니다' },
+                    'summarizing': { message: '🤖 AI 요약 생성 중...', details: 'LLM이 콘텐츠를 요약하고 있습니다 (가장 오래 걸리는 단계)' },
+                    'saving': { message: '💾 Obsidian 저장 중...', details: '요약된 내용을 저장하고 있습니다' },
+                    'indexing': { message: '📚 벡터 인덱싱 중...', details: '검색 가능하도록 인덱싱하고 있습니다' },
+                    'finalizing': { message: '✨ 최종 처리 중...', details: '마무리 작업을 진행하고 있습니다' }
+                },
+                'query': {
+                    'searching': { message: '🔍 벡터 검색 중...', details: '관련 문서를 찾고 있습니다' },
+                    'retrieving': { message: '📄 콘텐츠 검색 중...', details: '관련 정보를 검색하고 있습니다' },
+                    'generating': { message: '🤖 AI 답변 생성 중...', details: 'LLM이 답변을 생성하고 있습니다' },
+                    'formatting': { message: '📝 결과 포맷팅 중...', details: '최종 결과를 정리하고 있습니다' }
+                }
+            };
+
+            const stageInfo = stages[baseId]?.[stage];
+            if (stageInfo) {
+                showDetailedLoading(baseId, true, stageInfo.message, stageInfo.details || details);
+            }
+        }
+
         async function captureUrl() {
             const url = document.getElementById('url').value;
             const method = document.getElementById('method').value;
@@ -235,16 +313,38 @@
             }
 
             showLoading('capture-loading', true);
+            showDetailedLoading('capture', true, '🔄 처리 시작 중...', 'URL 캡처를 시작합니다');
             document.getElementById('capture-result').innerHTML = '';
 
             try {
+                // Simulate progress stages based on typical processing times
+                updateProcessingStage('capture', 'scraping');
+                await new Promise(resolve => setTimeout(resolve, 3000)); // 3 seconds for scraping
+
+                updateProcessingStage('capture', 'analyzing');
+                await new Promise(resolve => setTimeout(resolve, 2000)); // 2 seconds for analysis
+
+                updateProcessingStage('capture', 'summarizing');
+                await new Promise(resolve => setTimeout(resolve, 15000)); // 15 seconds for LLM (main processing)
+
+                updateProcessingStage('capture', 'saving');
+                await new Promise(resolve => setTimeout(resolve, 2000)); // 2 seconds for saving
+
+                updateProcessingStage('capture', 'indexing');
+                await new Promise(resolve => setTimeout(resolve, 3000)); // 3 seconds for indexing
+
+                updateProcessingStage('capture', 'finalizing');
+                await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second finalization
+
                 const result = await apiCall('/capture', 'POST', { url, method });
+                showDetailedLoading('capture', false);
                 showResult('capture-result', `
                     <strong>✅ 저장 완료!</strong><br>
                     파일: ${result.file_path}<br>
                     제목: ${result.title}
                 `);
             } catch (error) {
+                showDetailedLoading('capture', false);
                 showResult('capture-result', `❌ 오류: ${error.message}`, true);
             } finally {
                 showLoading('capture-loading', false);
@@ -261,9 +361,23 @@
             }
 
             showLoading('query-loading', true);
+            showDetailedLoading('query', true, '🔍 검색 시작 중...', '쿼리를 처리합니다');
             document.getElementById('query-result').innerHTML = '';
 
             try {
+                // Simulate progress stages based on typical query processing times
+                updateProcessingStage('query', 'searching');
+                await new Promise(resolve => setTimeout(resolve, 2000)); // 2 seconds for vector search
+
+                updateProcessingStage('query', 'retrieving');
+                await new Promise(resolve => setTimeout(resolve, 3000)); // 3 seconds for content retrieval
+
+                updateProcessingStage('query', 'generating');
+                await new Promise(resolve => setTimeout(resolve, 8000)); // 8 seconds for LLM generation
+
+                updateProcessingStage('query', 'formatting');
+                await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second for formatting
+
                 const result = await apiCall('/query', 'POST', { query, top_k: topK });
 
                 let sources = '';
@@ -273,6 +387,7 @@
                     sources += `내용: ${source.content_preview}</p>`;
                 });
 
+                showDetailedLoading('query', false);
                 showResult('query-result', `
                     <h3>답변</h3>
                     <p>${result.answer}</p>
@@ -280,6 +395,7 @@
                     ${sources}
                 `);
             } catch (error) {
+                showDetailedLoading('query', false);
                 showResult('query-result', `❌ 오류: ${error.message}`, true);
             } finally {
                 showLoading('query-loading', false);

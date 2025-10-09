@@ -49,18 +49,13 @@ class LlamaCppLLM(CustomLLM):
     def metadata(self) -> LLMMetadata:
         """Return LLM metadata as LLMMetadata object."""
         return LLMMetadata(
-            context_window=self.context_window,
+            context_window=4096,
             num_output=self.max_tokens or 1024,
             is_chat_model=True,
             model_name=self.model_name,
         )
 
-    @property
-    def context_window(self) -> int:
-        """Return the context window size."""
-        # Default context window for the model
-        return 4096
-
+    
     def _format_messages_for_llamacpp(self, messages: Sequence[ChatMessage]) -> List[Dict[str, str]]:
         """Format messages for llama.cpp server."""
         formatted_messages = []

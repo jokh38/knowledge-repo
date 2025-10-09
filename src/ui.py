@@ -2,6 +2,7 @@ import gradio as gr
 import requests
 import os
 import logging
+import time
 from typing import Tuple, Optional
 
 # Setup logging
@@ -12,24 +13,41 @@ logger = logging.getLogger(__name__)
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 API_TOKEN = os.getenv("API_TOKEN", "")
 
+def processing_status_generator():
+    """Generate processing status messages for URL capture"""
+    status_messages = [
+        "🔄 URL 스크래핑 시작...",
+        "📄 콘텐츠 분석 중...",
+        "🤖 LLM 요약 생성 중...",
+        "💾 Obsidian 저장 중...",
+        "📚 벡터 인덱싱 중...",
+        "✨ 최종 처리 중..."
+    ]
+
+    for i, message in enumerate(status_messages):
+        yield f"⏳ 처리 중: {message}"
+        time.sleep(2)  # Simulate processing time for demo
+
+    yield "🎉 처리 완료!"
+
 def capture_url_ui(url: str, method: str = "auto") -> str:
     """Gradio interface for URL capture"""
     try:
         headers = {}
         if API_TOKEN:
             headers["Authorization"] = f"Bearer {API_TOKEN}"
-        
+
         payload = {"url": url}
         if method != "auto":
             payload["method"] = method
-        
+
         response = requests.post(
             f"{API_BASE_URL}/capture",
             json=payload,
             headers=headers,
-            timeout=30
+            timeout=120  # Increased timeout for LLM processing
         )
-        
+
         if response.status_code == 200:
             result = response.json()
             return f"✅ 저장 완료!\n파일: {result['file_path']}\n제목: {result['title']}"
@@ -37,7 +55,7 @@ def capture_url_ui(url: str, method: str = "auto") -> str:
             error_msg = response.json().get("detail", "Unknown error")
             return f"❌ 오류: {error_msg}"
     except requests.exceptions.Timeout:
-        return "❌ 오류: 요청 시간 초과 (30초)"
+        return "❌ 오류: 요청 시간 초과 (LLM 처리는 최대 2분까지 소요될 수 있습니다)"
     except requests.exceptions.ConnectionError:
         return f"❌ 오류: API 서버에 연결할 수 없습니다 ({API_BASE_URL})"
     except Exception as e:
@@ -49,22 +67,22 @@ def query_knowledge_ui(query: str, top_k: int = 5) -> Tuple[str, str]:
         headers = {}
         if API_TOKEN:
             headers["Authorization"] = f"Bearer {API_TOKEN}"
-        
+
         payload = {"query": query, "top_k": top_k}
-        
+
         response = requests.post(
             f"{API_BASE_URL}/query",
             json=payload,
             headers=headers,
-            timeout=30
+            timeout=60  # Increased timeout for LLM processing
         )
-        
+
         if response.status_code == 200:
             result = response.json()
-            
+
             # Format answer
             answer = f"## 답변\n\n{result['answer']}"
-            
+
             # Format sources
             sources = "## 출처\n\n"
             for i, source in enumerate(result['sources'], 1):
@@ -72,13 +90,13 @@ def query_knowledge_ui(query: str, top_k: int = 5) -> Tuple[str, str]:
                 if source.get('score'):
                     sources += f"   - 유사도: {source['score']:.3f}\n"
                 sources += f"   - 내용: {source['content_preview']}\n\n"
-            
+
             return answer, sources
         else:
             error_msg = response.json().get("detail", "Unknown error")
             return f"❌ 오류: {error_msg}", ""
     except requests.exceptions.Timeout:
-        return "❌ 오류: 요청 시간 초과 (30초)", ""
+        return "❌ 오류: 요청 시간 초과 (LLM 처리는 최대 1분까지 소요될 수 있습니다)", ""
     except requests.exceptions.ConnectionError:
         return f"❌ 오류: API 서버에 연결할 수 없습니다 ({API_BASE_URL})", ""
     except Exception as e:
@@ -133,6 +151,7 @@ with gr.Blocks(title="지식 저장소") as iface:
         # URL Capture Tab
         with gr.TabItem("URL 캡처"):
             gr.Markdown("## 웹 페이지 캡처")
+            gr.Markdown("⚠️ **참고**: LLM 요약 처리는 최대 1-2분 정도 소요될 수 있습니다.")
             
             with gr.Row():
                 url_input = gr.Textbox(
@@ -149,11 +168,12 @@ with gr.Blocks(title="지식 저장소") as iface:
             
             capture_btn = gr.Button("캡처", variant="primary")
             capture_output = gr.Textbox(label="결과", lines=5)
-            
+
             capture_btn.click(
                 fn=capture_url_ui,
                 inputs=[url_input, method_dropdown],
-                outputs=capture_output
+                outputs=capture_output,
+                show_progress=True  # Show progress during processing
             )
         
         # Knowledge Query Tab
@@ -176,15 +196,16 @@ with gr.Blocks(title="지식 저장소") as iface:
                 )
             
             query_btn = gr.Button("검색", variant="primary")
-            
+
             with gr.Row():
                 answer_output = gr.Markdown(label="답변")
                 sources_output = gr.Markdown(label="출처")
-            
+
             query_btn.click(
                 fn=query_knowledge_ui,
                 inputs=[query_input, top_k_slider],
-                outputs=[answer_output, sources_output]
+                outputs=[answer_output, sources_output],
+                show_progress=True  # Show progress during processing
             )
         
         # Management Tab
