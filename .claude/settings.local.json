@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(python3:*)",
+      "Bash(OBSIDIAN_VAULT_PATH=\"/tmp/test_vault\" python3 -c \"import main; print(''Main module imported successfully'')\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(OBSIDIAN_VAULT_PATH=/home/jokh38/Documents/ObsidianVault timeout 5 python3 main.py)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

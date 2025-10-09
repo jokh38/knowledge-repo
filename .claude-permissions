@@ -1,0 +1,15 @@
+# Git operations
+git add *
+git commit -m "*"
+git push origin *
+git pull origin *
+
+# Python operations
+python3 -m pytest *
+python3 -c "import *"
+pip install *
+
+# File operations
+ls -la
+cat *
+grep * *
