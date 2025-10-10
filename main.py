@@ -105,6 +105,10 @@ class CaptureResponse(BaseModel):
     title: str
     message: str
 
+class TextCaptureRequest(BaseModel):
+    content: str
+    title: Optional[str] = None
+
 class QueryRequest(BaseModel):
     query: str
     top_k: int = 5
@@ -269,6 +273,54 @@ async def capture_url(request: CaptureRequest):
         logger.debug(f"[DEBUG] Full traceback: {traceback.format_exc()}")
         log_api_call("/capture", {"url": str(request.url)}, False, "Internal server error")
         raise HTTPException(status_code=500, detail="An unexpected error occurred. Please try again.")
+
+@app.post("/capture_text", response_model=CaptureResponse)
+async def capture_text(request: TextCaptureRequest):
+    """Capture a text snippet and save to Obsidian"""
+    start_time = time.time()
+    try:
+        logger.info(f"Capturing text snippet. Content length: {len(request.content)}")
+        log_api_call("/capture_text", {"content_length": len(request.content)})
+
+        # 제목 결정: 요청에 제목이 없으면 내용의 첫 줄을 사용
+        title = request.title
+        if not title:
+            first_line = request.content.strip().split('\n')[0]
+            # 20자 이내로 제목 생성
+            title = first_line[:20] if len(first_line) > 20 else first_line
+
+        # Step 1: Save to Obsidian (요약, 스크랩 과정 없음)
+        logger.info(f"[CAPTURE_TEXT] Step 1/2: Saving to Obsidian vault")
+        file_path = obsidian_writer.save_to_obsidian(
+            url="",  # URL이 없으므로 비워둠
+            title=title,
+            content=request.content,
+            summary="" # 요약이 없으므로 비워둠
+        )
+        logger.info(f"[CAPTURE_TEXT] File saved successfully: {file_path}")
+
+        # Step 2: Add incremental indexing
+        logger.info(f"[CAPTURE_TEXT] Step 2/2: Starting incremental indexing")
+        retriever.incremental_index(file_path)
+        logger.info(f"[CAPTURE_TEXT] Incremental indexing completed successfully")
+
+        duration = time.time() - start_time
+        logger.info(f"Successfully saved text snippet to: {file_path} in {duration:.2f}s")
+        log_api_call("/capture_text", {}, True, None)
+
+        return CaptureResponse(
+            success=True,
+            file_path=file_path,
+            title=title,
+            message="텍스트가 성공적으로 저장되었습니다."
+        )
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"Unexpected error during text capture after {duration:.2f}s: {type(e).__name__}: {str(e)}")
+        import traceback
+        logger.debug(f"[DEBUG] Full traceback: {traceback.format_exc()}")
+        log_api_call("/capture_text", {}, False, "Internal server error")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred.")
 
 @app.post("/query", response_model=QueryResponse)
 async def query_knowledge(request: QueryRequest):
