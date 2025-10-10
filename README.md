@@ -137,7 +137,7 @@ knowledge-repo/
 ├── obsidian_writer.py     # Markdown 파일 작성기
 ├── retriever.py           # RAG 검색 엔진
 ├── ui.py                  # Gradio 웹 인터페이스
-├── auth.py                # (optional; unused in local mode)
+
 ├── logging_config.py      # 로깅 설정
 ├── utils/
 │   └── retry.py           # 재시도 데코레이터
