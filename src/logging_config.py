@@ -14,7 +14,7 @@ def setup_logging(log_level: str = "DEBUG", log_file: str = "knowledge_api.log")
 
     # Convert string log level to logging constant
     numeric_level = getattr(logging, log_level.upper(), logging.DEBUG)
-    
+
     # Create formatters
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -29,27 +29,50 @@ def setup_logging(log_level: str = "DEBUG", log_file: str = "knowledge_api.log")
     file_handler.setFormatter(formatter)
     file_handler.setLevel(numeric_level)
 
-    # Console handler
+    # Console handler (set to WARNING level to reduce console noise)
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
-    console_handler.setLevel(numeric_level)
+    console_handler.setLevel(logging.WARNING)  # Only warnings and errors to console
 
-    # Root logger
-    logger = logging.getLogger()
-    logger.setLevel(numeric_level)
-    
+    # Root logger configuration
+    root_logger = logging.getLogger()
+    root_logger.setLevel(numeric_level)
+
     # Remove existing handlers to avoid duplicates
-    logger.handlers.clear()
-    
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
-    
-    # Set specific logger levels
+    root_logger.handlers.clear()
+
+    # Add handlers to root logger
+    root_logger.addHandler(file_handler)
+    root_logger.addHandler(console_handler)
+
+    # Configure all existing loggers to also use our handlers
+    for logger_name in logging.Logger.manager.loggerDict.keys():
+        existing_logger = logging.getLogger(logger_name)
+        existing_logger.setLevel(numeric_level)
+        existing_logger.handlers.clear()
+        existing_logger.propagate = 1  # Make sure they propagate to root logger
+
+    # Set specific logger levels for noisy third-party libraries
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("chromadb").setLevel(logging.WARNING)
-    
-    return logger
+    logging.getLogger("charset_normalizer").setLevel(logging.WARNING)
+    logging.getLogger("chardet.charsetprober").setLevel(logging.WARNING)
+    logging.getLogger("fsspec.local").setLevel(logging.WARNING)
+    logging.getLogger("llama_index.core.node_parser.node_utils").setLevel(logging.WARNING)
+    logging.getLogger("llama_index.vector_stores.chroma.base").setLevel(logging.WARNING)
+    logging.getLogger("llama_index.core.indices.utils").setLevel(logging.WARNING)
+    logging.getLogger("llama_index.core.response_synthesizers.refine").setLevel(logging.WARNING)
+    logging.getLogger("llama_index_instrumentation.dispatcher").setLevel(logging.WARNING)
+
+    # Force configuration of our application loggers
+    app_loggers = ["__main__", "src.scraper", "src.summarizer", "src.obsidian_writer", "src.retriever", "src.custom_llm"]
+    for logger_name in app_loggers:
+        app_logger = logging.getLogger(logger_name)
+        app_logger.setLevel(numeric_level)
+        app_logger.propagate = 1  # Ensure propagation to root logger
+
+    return root_logger
 
 def get_logger(name: str) -> logging.Logger:
     """Get a logger with the specified name"""
