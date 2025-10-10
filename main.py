@@ -49,6 +49,7 @@ default_allowed_origins = [
     "http://localhost:8000",    # API server itself
     "http://127.0.0.1:7860",    # Alternative localhost
     "http://127.0.0.1:8000",    # Alternative localhost
+    "*"  # Allow all origins for local development
 ]
 
 env_allowed = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
