@@ -107,13 +107,13 @@ print_status "Smart cleaning Knowledge Repository services..."
 print_info "This will ONLY stop services launched by our start script"
 print_info "Other services using the same ports will be left alone"
 
-# Stop API server on port 8000 (only our run_with_env.py main.py)
-print_status "Checking API server on port 8000..."
-stop_service_on_port 8000 "API Server"
-
 # Stop Web UI on port 7860 (only our simple_server.py or ui.py)
 print_status "Checking Web UI on port 7860..."
 stop_service_on_port 7860 "Web UI"
+
+# Stop API server on port 8000 (only our run_with_env.py main.py)
+print_status "Checking API server on port 8000..."
+stop_service_on_port 8000 "API Server"
 
 # Additional cleanup: Find and stop any remaining Knowledge Repository processes
 print_status "Checking for any remaining Knowledge Repository processes..."
