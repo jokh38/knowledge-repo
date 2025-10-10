@@ -22,12 +22,13 @@ def _get_model_config(base_url: str) -> tuple:
 @retry(max_attempts=3, delay=2)
 def summarize_content(content: str, max_length: int = 4000) -> Dict[str, str]:
     """Summarize web content using local LLM"""
-    logger.debug(f"[DEBUG] Starting content summarization")
-    logger.debug(f"[DEBUG] Original content length: {len(content)} characters")
+    summarize_start = time.time()
+    logger.info(f"[SUMMARIZER] Starting content summarization")
+    logger.info(f"[SUMMARIZER] Original content length: {len(content)} characters")
 
     # Truncate long content
     truncated = content[:max_length]
-    logger.debug(f"[DEBUG] Truncated content length: {len(truncated)} characters")
+    logger.info(f"[SUMMARIZER] Truncated content length: {len(truncated)} characters")
 
     prompt = f"""다음 웹 콘텐츠를 분석하여:
 1. 핵심 내용을 3-5개 불렛 포인트로 요약
@@ -47,41 +48,51 @@ def summarize_content(content: str, max_length: int = 4000) -> Dict[str, str]:
 ## 카테고리
 [카테고리]
 """
-    logger.debug(f"[DEBUG] Generated prompt length: {len(prompt)} characters")
+    logger.info(f"[SUMMARIZER] Generated prompt length: {len(prompt)} characters")
 
     base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    logger.debug(f"[DEBUG] Using base URL: {base_url}")
+    logger.info(f"[SUMMARIZER] Using LLM server at: {base_url}")
 
     model_name, model_display_name = _get_model_config(base_url)
+    logger.info(f"[SUMMARIZER] Using model: {model_display_name}")
 
     try:
         # Try HTTP request first (better compatibility with llama.cpp)
-        logger.debug(f"[DEBUG] Trying HTTP request method")
+        logger.info(f"[SUMMARIZER] Attempting HTTP request method")
+        request_start = time.time()
         content = make_llm_request(prompt, model_name, base_url, temperature=0.3)
-        logger.debug(f"[DEBUG] HTTP request successful, got {len(content)} characters")
+        request_time = time.time() - request_start
+        total_time = time.time() - summarize_start
+        logger.info(f"[SUMMARIZER] HTTP request successful in {request_time:.2f}s, got {len(content)} characters")
+        logger.info(f"[SUMMARIZER] Summarization completed in {total_time:.2f}s")
         return {
             'summary': content,
             'model': model_display_name
         }
 
     except Exception as http_error:
-        logger.warning(f"HTTP request method failed: {http_error}. Trying Ollama client...")
-        logger.debug(f"[DEBUG] HTTP error details: {type(http_error).__name__}: {str(http_error)}")
+        logger.warning(f"[SUMMARIZER] HTTP request method failed: {http_error}. Trying Ollama client...")
+        logger.debug(f"[SUMMARIZER] HTTP error details: {type(http_error).__name__}: {str(http_error)}")
 
         # Try Ollama client as fallback
         try:
-            logger.debug(f"[DEBUG] Trying Ollama client method")
+            logger.info(f"[SUMMARIZER] Attempting Ollama client method")
+            request_start = time.time()
             content = make_ollama_client_request(prompt, model_name, base_url, temperature=0.3)
-            logger.debug(f"[DEBUG] Ollama client successful, got {len(content)} characters")
+            request_time = time.time() - request_start
+            total_time = time.time() - summarize_start
+            logger.info(f"[SUMMARIZER] Ollama client successful in {request_time:.2f}s, got {len(content)} characters")
+            logger.info(f"[SUMMARIZER] Summarization completed in {total_time:.2f}s")
             return {
                 'summary': content,
                 'model': model_display_name
             }
 
         except Exception as client_error:
-            logger.error(f"Both HTTP and Ollama client methods failed")
-            logger.error(f"HTTP error: {type(http_error).__name__}: {str(http_error)}")
-            logger.error(f"Client error: {type(client_error).__name__}: {str(client_error)}")
+            total_time = time.time() - summarize_start
+            logger.error(f"[SUMMARIZER] Both HTTP and Ollama client methods failed after {total_time:.2f}s")
+            logger.error(f"[SUMMARIZER] HTTP error: {type(http_error).__name__}: {str(http_error)}")
+            logger.error(f"[SUMMARIZER] Client error: {type(client_error).__name__}: {str(client_error)}")
             raise Exception(f"All summarization methods failed. HTTP: {str(http_error)}; Client: {str(client_error)}")
 
 @retry(max_attempts=2, delay=1)

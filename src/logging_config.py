@@ -33,10 +33,10 @@ def setup_logging(log_level: str = "DEBUG", log_file: str = "knowledge_api.log")
     file_handler.setFormatter(detailed_formatter)
     file_handler.setLevel(numeric_level)
 
-    # Console handler (show INFO and above in console)
+    # Console handler (show DEBUG and above in console for better visibility)
     console_handler = logging.StreamHandler()
-    console_handler.setFormatter(simple_formatter)
-    console_handler.setLevel(logging.INFO)  # Show info, warnings, and errors in console
+    console_handler.setFormatter(detailed_formatter)  # Use detailed formatter for console too
+    console_handler.setLevel(logging.DEBUG)  # Show debug messages in console
 
     # Additional file handler specifically for console output capture
     console_log_path = logs_dir / "console_output.log"
@@ -46,7 +46,7 @@ def setup_logging(log_level: str = "DEBUG", log_file: str = "knowledge_api.log")
         backupCount=5
     )
     console_file_handler.setFormatter(detailed_formatter)
-    console_file_handler.setLevel(logging.INFO)  # Capture console-level messages
+    console_file_handler.setLevel(logging.DEBUG)  # Capture debug-level messages
 
     # Root logger configuration
     root_logger = logging.getLogger()
