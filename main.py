@@ -329,12 +329,12 @@ if __name__ == "__main__":
     try:
         # Try to bind to the configured port first
         logger.info(f"Starting Knowledge Repository API on {host}:{port}")
-        uvicorn.run(app, host=host, port=port)
+        uvicorn.run(app, host=host, port=port, log_config=None)  # Use our logging config
     except OSError as e:
         if "Address already in use" in str(e):
             logger.warning(f"Port {port} is already in use, finding available port...")
             available_port = find_available_port(port + 1)
             logger.info(f"Starting Knowledge Repository API on {host}:{available_port}")
-            uvicorn.run(app, host=host, port=available_port)
+            uvicorn.run(app, host=host, port=available_port, log_config=None)  # Use our logging config
         else:
             raise

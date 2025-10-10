@@ -1,0 +1,30 @@
+2025-10-10 09:44:17,949 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-10 09:44:17,972 - uvicorn.error - INFO - Started server process [319359]
+2025-10-10 09:44:17,973 - uvicorn.error - INFO - Waiting for application startup.
+2025-10-10 09:44:17,974 - uvicorn.error - INFO - Application startup complete.
+2025-10-10 09:44:17,974 - uvicorn.error - INFO - Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2025-10-10 09:44:33,873 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-10 09:44:33,892 - uvicorn.error - INFO - Started server process [319512]
+2025-10-10 09:44:33,893 - uvicorn.error - INFO - Waiting for application startup.
+2025-10-10 09:44:33,893 - uvicorn.error - INFO - Application startup complete.
+2025-10-10 09:44:33,894 - uvicorn.error - INFO - Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2025-10-10 09:44:42,365 - __main__ - INFO - Starting Knowledge Repository API on 0.0.0.0:8000
+2025-10-10 09:44:42,384 - uvicorn.error - INFO - Started server process [319621]
+2025-10-10 09:44:42,384 - uvicorn.error - INFO - Waiting for application startup.
+2025-10-10 09:44:42,384 - uvicorn.error - INFO - Application startup complete.
+2025-10-10 09:44:42,385 - uvicorn.error - INFO - Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2025-10-10 09:46:37,567 - request - INFO - Request: GET http://localhost:8000/health from 127.0.0.1
+2025-10-10 09:46:37,569 - response - INFO - Response: 200 in 0.003s
+2025-10-10 09:46:37,570 - uvicorn.access - INFO - 127.0.0.1:47000 - "GET /health HTTP/1.1" 200
+2025-10-10 09:46:37,722 - request - INFO - Request: GET http://localhost:8000/ from 127.0.0.1
+2025-10-10 09:46:37,723 - response - INFO - Response: 200 in 0.002s
+2025-10-10 09:46:37,724 - uvicorn.access - INFO - 127.0.0.1:47012 - "GET / HTTP/1.1" 200
+2025-10-10 09:46:40,930 - uvicorn.error - INFO - Shutting down
+2025-10-10 09:46:41,032 - uvicorn.error - INFO - Waiting for application shutdown.
+2025-10-10 09:46:41,032 - uvicorn.error - INFO - Application shutdown complete.
+2025-10-10 09:46:41,033 - uvicorn.error - INFO - Finished server process [319621]
+2025-10-10 09:46:41,036 - torch._dynamo.eval_frame - INFO - TorchDynamo attempted to trace the following frames: [
+
+]
+2025-10-10 09:46:41,037 - torch._dynamo.utils - INFO - TorchDynamo compilation metrics:
+Function, Runtimes (s)

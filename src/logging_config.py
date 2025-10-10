@@ -16,23 +16,37 @@ def setup_logging(log_level: str = "DEBUG", log_file: str = "knowledge_api.log")
     numeric_level = getattr(logging, log_level.upper(), logging.DEBUG)
 
     # Create formatters
-    formatter = logging.Formatter(
+    detailed_formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
 
-    # File handler with rotation
+    simple_formatter = logging.Formatter(
+        '%(levelname)s - %(message)s'
+    )
+
+    # File handler with rotation (captures all levels)
     file_handler = RotatingFileHandler(
         log_path,
         maxBytes=10_000_000,  # 10MB
         backupCount=5
     )
-    file_handler.setFormatter(formatter)
+    file_handler.setFormatter(detailed_formatter)
     file_handler.setLevel(numeric_level)
 
-    # Console handler (set to WARNING level to reduce console noise)
+    # Console handler (show INFO and above in console)
     console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
-    console_handler.setLevel(logging.WARNING)  # Only warnings and errors to console
+    console_handler.setFormatter(simple_formatter)
+    console_handler.setLevel(logging.INFO)  # Show info, warnings, and errors in console
+
+    # Additional file handler specifically for console output capture
+    console_log_path = logs_dir / "console_output.log"
+    console_file_handler = RotatingFileHandler(
+        console_log_path,
+        maxBytes=10_000_000,  # 10MB
+        backupCount=5
+    )
+    console_file_handler.setFormatter(detailed_formatter)
+    console_file_handler.setLevel(logging.INFO)  # Capture console-level messages
 
     # Root logger configuration
     root_logger = logging.getLogger()
@@ -42,13 +56,24 @@ def setup_logging(log_level: str = "DEBUG", log_file: str = "knowledge_api.log")
     root_logger.handlers.clear()
 
     # Add handlers to root logger
-    root_logger.addHandler(file_handler)
-    root_logger.addHandler(console_handler)
+    root_logger.addHandler(file_handler)        # Main log file
+    root_logger.addHandler(console_handler)     # Console output
+    root_logger.addHandler(console_file_handler) # Console log file
+
+    # Configure Uvicorn loggers specifically
+    uvicorn_loggers = ["uvicorn", "uvicorn.access", "uvicorn.error", "fastapi"]
+    for logger_name in uvicorn_loggers:
+        uvicorn_logger = logging.getLogger(logger_name)
+        uvicorn_logger.setLevel(logging.INFO)
+        uvicorn_logger.handlers.clear()
+        uvicorn_logger.propagate = 1  # Make sure they propagate to root logger
 
     # Configure all existing loggers to also use our handlers
     for logger_name in logging.Logger.manager.loggerDict.keys():
         existing_logger = logging.getLogger(logger_name)
-        existing_logger.setLevel(numeric_level)
+        # Don't change level for loggers we've already configured
+        if logger_name not in uvicorn_loggers:
+            existing_logger.setLevel(numeric_level)
         existing_logger.handlers.clear()
         existing_logger.propagate = 1  # Make sure they propagate to root logger
 
@@ -64,6 +89,8 @@ def setup_logging(log_level: str = "DEBUG", log_file: str = "knowledge_api.log")
     logging.getLogger("llama_index.core.indices.utils").setLevel(logging.WARNING)
     logging.getLogger("llama_index.core.response_synthesizers.refine").setLevel(logging.WARNING)
     logging.getLogger("llama_index_instrumentation.dispatcher").setLevel(logging.WARNING)
+    logging.getLogger("torch._dynamo").setLevel(logging.WARNING)
+    logging.getLogger("torch._subclasses.fake_tensor").setLevel(logging.WARNING)
 
     # Force configuration of our application loggers
     app_loggers = ["__main__", "src.scraper", "src.summarizer", "src.obsidian_writer", "src.retriever", "src.custom_llm"]
@@ -71,6 +98,10 @@ def setup_logging(log_level: str = "DEBUG", log_file: str = "knowledge_api.log")
         app_logger = logging.getLogger(logger_name)
         app_logger.setLevel(numeric_level)
         app_logger.propagate = 1  # Ensure propagation to root logger
+
+    # Configure uvicorn's access logging to be captured
+    logging.getLogger("uvicorn.access").propagate = 1
+    logging.getLogger("uvicorn.error").propagate = 1
 
     return root_logger
 
