@@ -39,7 +39,7 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
         # Add CORS headers
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         super().end_headers()
 
     def do_GET(self):

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -28,7 +28,7 @@ load_dotenv()
 
 # Import modules AFTER loading environment variables
 from src import scraper, summarizer, obsidian_writer, retriever
-from src.auth import verify_token, optional_auth, generate_api_token
+
 from src.logging_config import setup_logging, log_request_info, log_response_info, log_error, log_api_call
 
 # Setup logging
@@ -43,19 +43,31 @@ app = FastAPI(
 )
 
 # Add CORS middleware
-# For development, allow localhost origins. In production, update to specific domains.
-allowed_origins = [
+# Configure CORS via env var CORS_ALLOW_ORIGINS (comma-separated or '*').
+default_allowed_origins = [
     "http://localhost:7860",    # Simple web UI
     "http://localhost:8000",    # API server itself
     "http://127.0.0.1:7860",    # Alternative localhost
     "http://127.0.0.1:8000",    # Alternative localhost
 ]
 
+env_allowed = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
+if env_allowed:
+    if env_allowed == "*":
+        allowed_origins = ["*"]
+        allow_credentials_flag = False
+    else:
+        allowed_origins = [o.strip() for o in env_allowed.split(",") if o.strip()]
+        allow_credentials_flag = True
+else:
+    allowed_origins = default_allowed_origins
+    allow_credentials_flag = True
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],  # More restrictive methods
+    allow_credentials=allow_credentials_flag,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -63,7 +75,7 @@ app.add_middleware(
 @app.get("/simple_ui.html", response_class=FileResponse)
 async def serve_simple_ui():
     """Serve the simple UI HTML file"""
-    return FileResponse("simple_ui.html")
+    return FileResponse("simple_ui.html")  # No auth required
 
 # Request logging middleware
 @app.middleware("http")
@@ -145,7 +157,7 @@ async def health_check():
         raise HTTPException(status_code=503, detail="Service unavailable")
 
 @app.post("/capture", response_model=CaptureResponse)
-async def capture_url(request: CaptureRequest, token: Optional[str] = Depends(optional_auth)):
+async def capture_url(request: CaptureRequest):
     """Capture URL and save to Obsidian with auto-indexing"""
     start_time = time.time()
 
@@ -258,7 +270,7 @@ async def capture_url(request: CaptureRequest, token: Optional[str] = Depends(op
         raise HTTPException(status_code=500, detail="An unexpected error occurred. Please try again.")
 
 @app.post("/query", response_model=QueryResponse)
-async def query_knowledge(request: QueryRequest, token: Optional[str] = Depends(optional_auth)):
+async def query_knowledge(request: QueryRequest):
     """Query the knowledge base"""
     start_time = time.time()
 
@@ -304,7 +316,7 @@ async def query_knowledge(request: QueryRequest, token: Optional[str] = Depends(
         raise HTTPException(status_code=500, detail="An unexpected error occurred. Please try again.")
 
 @app.post("/reindex")
-async def reindex_vault(request: ReindexRequest, token: Optional[str] = Depends(optional_auth)):
+async def reindex_vault(request: ReindexRequest):
     """Reindex the entire vault"""
     try:
         log_api_call("/reindex", {"force": request.force})
@@ -325,7 +337,7 @@ async def reindex_vault(request: ReindexRequest, token: Optional[str] = Depends(
         raise HTTPException(status_code=500, detail="An unexpected error occurred during reindexing. Please try again.")
 
 @app.get("/stats")
-async def get_stats(token: Optional[str] = Depends(optional_auth)):
+async def get_stats():
     """Get system statistics"""
     try:
         index_stats = retriever.get_index_stats()
@@ -345,20 +357,7 @@ async def get_stats(token: Optional[str] = Depends(optional_auth)):
         log_error(e, "Stats retrieval failed unexpectedly")
         raise HTTPException(status_code=500, detail="An unexpected error occurred while retrieving statistics.")
 
-@app.post("/token")
-async def generate_token():
-    """Generate a JWT token for API access"""
-    try:
-        # Generate token for API usage
-        token = generate_api_token("api_user")
-        return {
-            "access_token": token,
-            "token_type": "bearer",
-            "expires_in": os.getenv("JWT_EXPIRE_MINUTES", 30)
-        }
-    except Exception as e:
-        log_error(e, "Token generation failed")
-        raise HTTPException(status_code=500, detail="Failed to generate token")
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

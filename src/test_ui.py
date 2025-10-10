@@ -9,7 +9,6 @@ import time
 import sys
 
 API_BASE = "http://localhost:8000"
-API_TOKEN = "your_secure_token_here"
 
 def test_health():
     """Test the health endpoint"""
@@ -40,8 +39,7 @@ def test_capture():
 
     try:
         headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {API_TOKEN}"
+            "Content-Type": "application/json"
         }
         data = {"url": test_url, "method": "auto"}
 
@@ -67,8 +65,7 @@ def test_query():
 
     try:
         headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {API_TOKEN}"
+            "Content-Type": "application/json"
         }
         data = {"query": "test", "top_k": 3}
 

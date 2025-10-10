@@ -66,7 +66,7 @@ def setup_logging(log_level: str = "DEBUG", log_file: str = "knowledge_api.log")
         uvicorn_logger = logging.getLogger(logger_name)
         uvicorn_logger.setLevel(logging.INFO)
         uvicorn_logger.handlers.clear()
-        uvicorn_logger.propagate = 1  # Make sure they propagate to root logger
+        uvicorn_logger.propagate = True  # Make sure they propagate to root logger
 
     # Configure all existing loggers to also use our handlers
     for logger_name in logging.Logger.manager.loggerDict.keys():
@@ -75,7 +75,7 @@ def setup_logging(log_level: str = "DEBUG", log_file: str = "knowledge_api.log")
         if logger_name not in uvicorn_loggers:
             existing_logger.setLevel(numeric_level)
         existing_logger.handlers.clear()
-        existing_logger.propagate = 1  # Make sure they propagate to root logger
+        existing_logger.propagate = True  # Make sure they propagate to root logger
 
     # Set specific logger levels for noisy third-party libraries
     logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -96,20 +96,17 @@ def setup_logging(log_level: str = "DEBUG", log_file: str = "knowledge_api.log")
     logging.getLogger("torch._dynamo.utils").setLevel(logging.ERROR)
     logging.getLogger("torch._subclasses.fake_tensor").setLevel(logging.ERROR)
 
-    # Filter out passlib debug messages
-    logging.getLogger("passlib.utils.compat").setLevel(logging.WARNING)
-    logging.getLogger("passlib.registry").setLevel(logging.WARNING)
 
     # Force configuration of our application loggers
     app_loggers = ["__main__", "src.scraper", "src.summarizer", "src.obsidian_writer", "src.retriever", "src.custom_llm"]
     for logger_name in app_loggers:
         app_logger = logging.getLogger(logger_name)
         app_logger.setLevel(numeric_level)
-        app_logger.propagate = 1  # Ensure propagation to root logger
+        app_logger.propagate = True  # Ensure propagation to root logger
 
     # Configure uvicorn's access logging to be captured
-    logging.getLogger("uvicorn.access").propagate = 1
-    logging.getLogger("uvicorn.error").propagate = 1
+    logging.getLogger("uvicorn.access").propagate = True
+    logging.getLogger("uvicorn.error").propagate = True
 
     return root_logger
 

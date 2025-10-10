@@ -76,7 +76,7 @@ CHROMA_DB_PATH=./chroma_db
 # API 설정
 API_HOST=0.0.0.0
 API_PORT=8000
-API_TOKEN=your_secure_token_here
+# No authentication needed for local runs
 ```
 
 ### 3. 서버 시작
@@ -97,7 +97,6 @@ python ui.py
 
 ```bash
 curl -X POST http://localhost:8000/reindex \
-  -H "Authorization: Bearer your_token" \
   -H "Content-Type: application/json" \
   -d '{"force": true}'
 ```
@@ -108,7 +107,6 @@ curl -X POST http://localhost:8000/reindex \
 
 ```bash
 curl -X POST http://localhost:8000/capture \
-  -H "Authorization: Bearer your_token" \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com/article"}'
 ```
@@ -117,7 +115,6 @@ curl -X POST http://localhost:8000/capture \
 
 ```bash
 curl -X POST http://localhost:8000/query \
-  -H "Authorization: Bearer your_token" \
   -H "Content-Type: application/json" \
   -d '{"query": "기계 학습이란?", "top_k": 5}'
 ```
@@ -140,7 +137,7 @@ knowledge-repo/
 ├── obsidian_writer.py     # Markdown 파일 작성기
 ├── retriever.py           # RAG 검색 엔진
 ├── ui.py                  # Gradio 웹 인터페이스
-├── auth.py                # 인증
+├── auth.py                # (optional; unused in local mode)
 ├── logging_config.py      # 로깅 설정
 ├── utils/
 │   └── retry.py           # 재시도 데코레이터

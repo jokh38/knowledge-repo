@@ -51,7 +51,6 @@ mypy *.py
 ```bash
 # Reindex entire vault (force rebuild)
 curl -X POST http://localhost:8000/reindex \
-  -H "Authorization: Bearer your_token" \
   -H "Content-Type: application/json" \
   -d '{"force": true}'
 
@@ -80,7 +79,7 @@ This is a personal knowledge management system that collects web content, summar
 - **LLM**: Ollama with Qwen3-Coder-30B model for summarization and query responses
 - **Vector Store**: ChromaDB with sentence-transformers multilingual embeddings
 - **Web Scraping**: Firecrawl (both bash script and Python API)
-- **Authentication**: Simple token-based auth with optional JWT support
+- **Authentication**: None required for local runs (no tokens/JWT)
 
 ### Data Flow
 
@@ -94,7 +93,6 @@ Required environment variables in `.env`:
 - `OBSIDIAN_VAULT_PATH`: Path to Obsidian vault directory
 - `OLLAMA_BASE_URL`: Ollama API server URL (default: http://localhost:11434)
 - `CHROMA_DB_PATH`: Vector database storage path (default: ./chroma_db)
-- `API_TOKEN`: Simple authentication token
 - `API_HOST/API_PORT`: Server configuration
 
 ### File Structure

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 # API configuration
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
-API_TOKEN = os.getenv("API_TOKEN", "")
+# No authentication in local mode
 
 def processing_status_generator():
     """Generate processing status messages for URL capture"""
@@ -34,8 +34,6 @@ def capture_url_ui(url: str, method: str = "auto") -> str:
     """Gradio interface for URL capture"""
     try:
         headers = {}
-        if API_TOKEN:
-            headers["Authorization"] = f"Bearer {API_TOKEN}"
 
         payload = {"url": url}
         if method != "auto":
@@ -65,8 +63,6 @@ def query_knowledge_ui(query: str, top_k: int = 5) -> Tuple[str, str]:
     """Gradio interface for knowledge query"""
     try:
         headers = {}
-        if API_TOKEN:
-            headers["Authorization"] = f"Bearer {API_TOKEN}"
 
         payload = {"query": query, "top_k": top_k}
 
@@ -106,10 +102,9 @@ def reindex_vault_ui(force: bool = False) -> str:
     """Gradio interface for vault reindexing"""
     try:
         headers = {}
-        if API_TOKEN:
-            headers["Authorization"] = f"Bearer {API_TOKEN}"
         
         payload = {"force": force}
+
         
         response = requests.post(
             f"{API_BASE_URL}/reindex",

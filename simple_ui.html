@@ -207,8 +207,17 @@
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:8000';
-        const API_TOKEN = 'your_secure_token_here'; // Add your token if needed
+        // Resolve API base dynamically (no auth)
+        function getApiBase() {
+            const qs = new URLSearchParams(window.location.search);
+            const fromQuery = qs.get('api');
+            const fromStorage = localStorage.getItem('API_BASE');
+            if (fromQuery) return fromQuery;
+            if (fromStorage) return fromStorage;
+            const port = Number(qs.get('api_port')) || 8000;
+            return `${window.location.protocol}//${window.location.hostname}:${port}`;
+        }
+        const API_BASE = getApiBase();
 
         async function apiCall(endpoint, method = 'GET', data = null) {
             const options = {
@@ -218,9 +227,6 @@
                 }
             };
 
-            if (API_TOKEN) {
-                options.headers['Authorization'] = `Bearer ${API_TOKEN}`;
-            }
 
             if (data) {
                 options.body = JSON.stringify(data);
@@ -430,7 +436,7 @@
         }
 
         function updateConnectionStatus(isConnected) {
-            const statusElement = document.getElementById('connection-status');
+            let statusElement = document.getElementById('connection-status');
             if (!statusElement) {
                 const statusDiv = document.createElement('div');
                 statusDiv.id = 'connection-status';
@@ -478,6 +484,10 @@
         // Check health on page load and periodically
         window.addEventListener('load', () => {
             checkHealth();
+            // Persist selections for convenience
+            try {
+                localStorage.setItem('API_BASE', API_BASE);
+            } catch (e) {}
             // Check health every 30 seconds
             setInterval(checkHealth, 30000);
         });
