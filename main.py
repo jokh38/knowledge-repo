@@ -17,7 +17,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # Suppress specific deprecation warnings
 warnings.filterwarnings('ignore', category=UserWarning, module='pydantic._internal._generate_schema')
 
-# Load environment variables FIRST
+# Initialize comprehensive console capture FIRST
+from src.console_capture import setup_global_console_logging
+console_capture = setup_global_console_logging()
+
+# Load environment variables AFTER console capture is set up
 load_dotenv()
 
 # Import modules AFTER loading environment variables

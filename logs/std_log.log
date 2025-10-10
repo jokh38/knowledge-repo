@@ -1,0 +1,51 @@
+2025-10-10 10:04:43,603 - console_capture - INFO - === Console Capture Started ===
+2025-10-10 10:04:43,603 - console_capture - INFO - Consolidated std log: logs/std_log.log
+2025-10-10 10:04:43,603 - src.console_capture - INFO - Global console logging initialized
+2025-10-10 10:04:43,603 - src.console_capture - INFO - Consolidated std log file: logs/std_log.log
+2025-10-10 10:04:43,603 - src.console_capture - INFO - Console capture active: logs/std_log.log
+1. Testing stdout messages...2025-10-10 10:04:43,603 - console_capture - DEBUG - [STDOUT] 1. Testing stdout messages...
+
+This stdout message should go to std_log.log2025-10-10 10:04:43,603 - console_capture - DEBUG - [STDOUT] This stdout message should go to std_log.log
+
+Another stdout message with some details2025-10-10 10:04:43,603 - console_capture - DEBUG - [STDOUT] Another stdout message with some details
+
+2. Testing stderr messages...2025-10-10 10:04:43,603 - console_capture - DEBUG - [STDOUT] 2. Testing stderr messages...
+
+This stderr message should also go to std_log.log2025-10-10 10:04:43,603 - console_capture - DEBUG - [STDERR] This stderr message should also go to std_log.log
+
+Error message with details2025-10-10 10:04:43,603 - console_capture - DEBUG - [STDERR] Error message with details
+
+3. Testing Python logging...2025-10-10 10:04:43,603 - console_capture - DEBUG - [STDOUT] 3. Testing Python logging...
+
+2025-10-10 10:04:43,603 - test_consolidated - INFO - This Python logging message should go to std_log.log
+2025-10-10 10:04:43,603 - test_consolidated - WARNING - This warning should also be in std_log.log
+2025-10-10 10:04:43,603 - test_consolidated - ERROR - This error should be in std_log.log
+2025-10-10 10:04:43,603 - test_consolidated - DEBUG - This debug message should be in std_log.log
+4. Testing mixed output...2025-10-10 10:04:43,603 - console_capture - DEBUG - [STDOUT] 4. Testing mixed output...
+
+Mixed stdout message2025-10-10 10:04:43,603 - console_capture - DEBUG - [STDOUT] Mixed stdout message
+
+2025-10-10 10:04:43,603 - test_consolidated - INFO - Mixed logging message
+Mixed stderr message2025-10-10 10:04:43,603 - console_capture - DEBUG - [STDERR] Mixed stderr message
+
+=== Consolidated Logging Test Completed ===2025-10-10 10:04:43,603 - console_capture - DEBUG - [STDOUT] === Consolidated Logging Test Completed ===
+
+Check the consolidated log file: logs/std_log.log2025-10-10 10:04:43,604 - console_capture - DEBUG - [STDOUT] Check the consolidated log file: logs/std_log.log
+
+✓ Consolidated log file exists: logs/std_log.log2025-10-10 10:04:44,605 - console_capture - DEBUG - [STDOUT] ✓ Consolidated log file exists: logs/std_log.log
+
+✓ File size: 2488 bytes2025-10-10 10:04:44,605 - console_capture - DEBUG - [STDOUT] ✓ File size: 2488 bytes
+
+✓ Total lines in file: 382025-10-10 10:04:44,606 - console_capture - DEBUG - [STDOUT] ✓ Total lines in file: 38
+
+Last 5 lines:2025-10-10 10:04:44,606 - console_capture - DEBUG - [STDOUT] Last 5 lines:
+
+  
+  ✓ Consolidated log file exists: logs/std_log.log2025-10-10 10:04:44,605 - console_capture - DEBUG - [STDOUT] ✓ Consolidated log file exists: logs/std_log.log2025-10-10 10:04:44,606 - console_capture - DEBUG - [STDOUT]   ✓ Consolidated log file exists: logs/std_log.log2025-10-10 10:04:44,605 - console_capture - DEBUG - [STDOUT] ✓ Consolidated log file exists: logs/std_log.log
+
+  
+  ✓ File size: 2488 bytes2025-10-10 10:04:44,605 - console_capture - DEBUG - [STDOUT] ✓ File size: 2488 bytes2025-10-10 10:04:44,606 - console_capture - DEBUG - [STDOUT]   ✓ File size: 2488 bytes2025-10-10 10:04:44,605 - console_capture - DEBUG - [STDOUT] ✓ File size: 2488 bytes
+
+  
+2025-10-10 10:04:44,606 - console_capture - INFO - === Console Capture Stopped ===
+=== Final Test of Consolidated Logging ===

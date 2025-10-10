@@ -77,9 +77,14 @@ fi
 # Start services
 print_status "Starting Knowledge Repository services..."
 
-# Start API server in background
+# Create console log for this session (use consolidated std_log.log)
+CONSOLE_LOG="logs/std_log.log"
+echo "=== Startup Session Started at $(date) ===" >> "$CONSOLE_LOG"
+echo "Shell script logging to: $CONSOLE_LOG" >> "$CONSOLE_LOG"
+
+# Start API server in background with output redirection
 print_status "Starting API server on port 8000..."
-python3 run_with_env.py main.py &
+python3 run_with_env.py main.py 2>&1 | tee -a "$CONSOLE_LOG" &
 API_PID=$!
 
 # Wait a moment for API server to start
@@ -87,15 +92,18 @@ sleep 3
 
 # Start Simple Web UI (instead of problematic gradio)
 print_status "Starting Simple Web UI on port 7860..."
-python3 src/simple_server.py &
+python3 src/simple_server.py 2>&1 | tee -a "$CONSOLE_LOG" &
 UI_PID=$!
 
 # Function to cleanup on exit
 cleanup() {
     print_status "Shutting down services..."
+    echo "=== Services stopping at $(date) ===" >> "$CONSOLE_LOG"
     kill $API_PID 2>/dev/null || true
     kill $UI_PID 2>/dev/null || true
     print_status "Services stopped. Goodbye!"
+    echo "=== Startup Session Ended at $(date) ===" >> "$CONSOLE_LOG"
+    echo "All console output saved to: $CONSOLE_LOG"
     exit 0
 }
 
@@ -106,8 +114,15 @@ print_status "Services started successfully!"
 print_status "API Server: http://localhost:8000"
 print_status "Simple UI: http://localhost:7860/simple_ui.html"
 print_status "API Docs: http://localhost:8000/docs"
+print_status "All Console Output: $CONSOLE_LOG"
 print_status ""
 print_status "Press Ctrl+C to stop all services"
+
+# Log the successful startup
+echo "=== Services started successfully at $(date) ===" >> "$CONSOLE_LOG"
+echo "API Server: http://localhost:8000" >> "$CONSOLE_LOG"
+echo "Simple UI: http://localhost:7860/simple_ui.html" >> "$CONSOLE_LOG"
+echo "All output consolidated in: $CONSOLE_LOG" >> "$CONSOLE_LOG"
 
 # Wait for services
 wait

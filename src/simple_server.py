@@ -6,8 +6,22 @@ Simple HTTP server for the Knowledge Repository UI
 import http.server
 import socketserver
 import os
+import sys
+import logging
 import webbrowser
 from pathlib import Path
+
+# Setup logging to capture all console output
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Initialize comprehensive console capture FIRST
+from src.console_capture import setup_global_console_logging
+console_capture = setup_global_console_logging()
+
+# Initialize standard logging
+from src.logging_config import setup_logging
+setup_logging(log_file="simple_ui.log")
+logger = logging.getLogger(__name__)
 
 PORT = 7860
 DIRECTORY = Path(__file__).parent.parent  # Serve from project root, not src/
@@ -44,41 +58,46 @@ def start_server():
         # Try the default port first
         try:
             with socketserver.TCPServer(("", PORT), CustomHandler) as httpd:
-                print(f"🚀 Simple UI Server running at http://localhost:{PORT}")
-                print(f"📁 Serving directory: {DIRECTORY}")
-                print(f"🌐 Open http://localhost:{PORT}/simple_ui.html in your browser")
-                print("Press Ctrl+C to stop the server")
+                logger.info(f"🚀 Simple UI Server running at http://localhost:{PORT}")
+                logger.info(f"📁 Serving directory: {DIRECTORY}")
+                logger.info(f"🌐 Open http://localhost:{PORT}/simple_ui.html in your browser")
+                logger.info("Press Ctrl+C to stop the server")
 
                 # Try to open browser automatically (optional)
                 try:
                     webbrowser.open(f'http://localhost:{PORT}/simple_ui.html')
-                except:
-                    pass
+                    logger.info(f"Browser automatically opened to http://localhost:{PORT}/simple_ui.html")
+                except Exception as e:
+                    logger.warning(f"Could not auto-open browser: {e}")
 
+                logger.info("Simple UI Server started successfully")
                 httpd.serve_forever()
         except OSError as e:
             if "Address already in use" in str(e):
                 available_port = find_available_port(PORT + 1)
-                print(f"⚠️ Port {PORT} is busy, using port {available_port} instead")
+                logger.warning(f"⚠️ Port {PORT} is busy, using port {available_port} instead")
                 with socketserver.TCPServer(("", available_port), CustomHandler) as httpd:
-                    print(f"🚀 Simple UI Server running at http://localhost:{available_port}")
-                    print(f"📁 Serving directory: {DIRECTORY}")
-                    print(f"🌐 Open http://localhost:{available_port}/simple_ui.html in your browser")
-                    print("Press Ctrl+C to stop the server")
+                    logger.info(f"🚀 Simple UI Server running at http://localhost:{available_port}")
+                    logger.info(f"📁 Serving directory: {DIRECTORY}")
+                    logger.info(f"🌐 Open http://localhost:{available_port}/simple_ui.html in your browser")
+                    logger.info("Press Ctrl+C to stop the server")
 
                     # Try to open browser automatically (optional)
                     try:
                         webbrowser.open(f'http://localhost:{available_port}/simple_ui.html')
-                    except:
-                        pass
+                        logger.info(f"Browser automatically opened to http://localhost:{available_port}/simple_ui.html")
+                    except Exception as browser_e:
+                        logger.warning(f"Could not auto-open browser: {browser_e}")
 
+                    logger.info("Simple UI Server started successfully on alternate port")
                     httpd.serve_forever()
             else:
+                logger.error(f"OSError starting server: {e}")
                 raise
     except KeyboardInterrupt:
-        print("\n👋 Server stopped. Goodbye!")
+        logger.info("👋 Simple UI Server stopped by user. Goodbye!")
     except Exception as e:
-        print(f"❌ Error starting server: {e}")
+        logger.error(f"❌ Error starting server: {e}")
 
 if __name__ == "__main__":
     start_server()
