@@ -145,7 +145,7 @@ async def health_check():
         raise HTTPException(status_code=503, detail="Service unavailable")
 
 @app.post("/capture", response_model=CaptureResponse)
-async def capture_url(request: CaptureRequest):
+async def capture_url(request: CaptureRequest, token: Optional[str] = Depends(optional_auth)):
     """Capture URL and save to Obsidian with auto-indexing"""
     start_time = time.time()
 
@@ -304,7 +304,7 @@ async def query_knowledge(request: QueryRequest, token: Optional[str] = Depends(
         raise HTTPException(status_code=500, detail="An unexpected error occurred. Please try again.")
 
 @app.post("/reindex")
-async def reindex_vault(request: ReindexRequest):
+async def reindex_vault(request: ReindexRequest, token: Optional[str] = Depends(optional_auth)):
     """Reindex the entire vault"""
     try:
         log_api_call("/reindex", {"force": request.force})
@@ -325,7 +325,7 @@ async def reindex_vault(request: ReindexRequest):
         raise HTTPException(status_code=500, detail="An unexpected error occurred during reindexing. Please try again.")
 
 @app.get("/stats")
-async def get_stats():
+async def get_stats(token: Optional[str] = Depends(optional_auth)):
     """Get system statistics"""
     try:
         index_stats = retriever.get_index_stats()
