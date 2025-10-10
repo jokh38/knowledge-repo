@@ -7,7 +7,7 @@ import logging
 import requests
 import json
 from typing import Dict, List, Optional, Sequence, Any
-from llama_index.core.llms import CustomLLM, CompletionResponse, ChatMessage, MessageRole, LLMMetadata
+from llama_index.core.llms import CustomLLM, CompletionResponse, ChatResponse, ChatMessage, MessageRole, LLMMetadata
 from llama_index.core.llms.callbacks import llm_chat_callback, llm_completion_callback
 from llama_index.core.bridge.pydantic import Field
 import os
@@ -132,7 +132,7 @@ class LlamaCppLLM(CustomLLM):
         raise ValueError(f"Unable to extract content from llama.cpp response: {response_data}")
 
     @llm_chat_callback()
-    def chat(self, messages: Sequence[ChatMessage], **kwargs) -> CompletionResponse:
+    def chat(self, messages: Sequence[ChatMessage], **kwargs) -> ChatResponse:
         """Chat with the llama.cpp server."""
         logger.debug(f"[DEBUG] LlamaCppLLM.chat called with {len(messages)} messages")
 
@@ -147,11 +147,14 @@ class LlamaCppLLM(CustomLLM):
             # Extract content
             content = self._extract_content_from_response(response_data)
 
-            # Create completion response
-            completion_response = CompletionResponse(text=content)
+            # Create chat response
+            chat_response = ChatResponse(
+                message=ChatMessage(role=MessageRole.ASSISTANT, content=content),
+                additional_kwargs={}
+            )
             logger.debug(f"[DEBUG] LlamaCppLLM chat completed successfully, response length: {len(content)}")
 
-            return completion_response
+            return chat_response
 
         except Exception as e:
             logger.error(f"[DEBUG] LlamaCppLLM chat failed: {str(e)}")

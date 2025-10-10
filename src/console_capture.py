@@ -41,21 +41,20 @@ class ConsoleCapture:
         self.logger = logging.getLogger("console_capture")
         self.logger.setLevel(logging.DEBUG)
 
-        # Clear existing handlers
+        # Clear existing handlers to prevent duplicates
         self.logger.handlers.clear()
 
         # Create formatters
         detailed_formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
-        simple_formatter = logging.Formatter('%(message)s')
 
-        # File handler for consolidated std output
+        # File handler for console capture messages only
         std_handler = logging.FileHandler(self.std_log, mode='a', encoding='utf-8')
         std_handler.setFormatter(detailed_formatter)
         std_handler.setLevel(logging.DEBUG)
 
-        # Add handlers
+        # Add handler
         self.logger.addHandler(std_handler)
 
         # Prevent propagation to avoid duplicate logs
@@ -94,48 +93,75 @@ class TeeWriter:
         self.logger = logger
         self.stream_type = stream_type
         self._lock = threading.Lock()
+        self._stopped = False
 
         # Open log file in append mode with UTF-8 encoding
-        self.file_handle = open(log_file, mode='a', encoding='utf-8', buffering=1)
+        try:
+            self.file_handle = open(log_file, mode='a', encoding='utf-8', buffering=1)
+        except Exception as e:
+            self.logger.error(f"Failed to open log file {log_file}: {e}")
+            self.file_handle = None
 
     def write(self, text: str):
         """Write text to both original stream and log file"""
-        if not text:
+        if not text or self._stopped:
             return
 
         with self._lock:
             # Write to original stream (console)
-            self.original_stream.write(text)
-            self.original_stream.flush()
+            try:
+                self.original_stream.write(text)
+                self.original_stream.flush()
+            except Exception as e:
+                # Ignore broken pipe errors during shutdown
+                if not ("Broken pipe" in str(e) or "BrokenPipeError" in str(e)):
+                    self.logger.error(f"Failed to write to {self.stream_type}: {e}")
 
             # Write to log file
-            try:
-                self.file_handle.write(text)
-                self.file_handle.flush()
-
-                # Also log to the main logger for structured logging
-                if text.strip():  # Only log non-empty lines
-                    self.logger.debug(f"[{self.stream_type}] {text.rstrip()}")
-            except Exception as e:
-                # If file writing fails, at least log to the main logger
-                self.logger.error(f"Failed to write to {self.stream_type} log: {e}")
+            if self.file_handle:
+                try:
+                    self.file_handle.write(f"{text}")
+                    self.file_handle.flush()
+                except Exception as e:
+                    # Ignore broken pipe errors during shutdown
+                    if not ("Broken pipe" in str(e) or "BrokenPipeError" in str(e)):
+                        self.logger.error(f"Failed to write to {self.stream_type} file: {e}")
 
     def flush(self):
         """Flush both streams"""
+        if self._stopped:
+            return
+
         with self._lock:
             try:
                 self.original_stream.flush()
-                self.file_handle.flush()
             except Exception as e:
-                self.logger.error(f"Failed to flush {self.stream_type}: {e}")
+                # Ignore broken pipe errors during shutdown
+                if not ("Broken pipe" in str(e) or "BrokenPipeError" in str(e)):
+                    self.logger.error(f"Failed to flush {self.stream_type}: {e}")
+
+            if self.file_handle:
+                try:
+                    self.file_handle.flush()
+                except Exception as e:
+                    # Ignore broken pipe errors during shutdown
+                    if not ("Broken pipe" in str(e) or "BrokenPipeError" in str(e)):
+                        self.logger.error(f"Failed to flush {self.stream_type} file: {e}")
 
     def stop(self):
         """Close the file handle"""
+        if self._stopped:
+            return
+
         with self._lock:
-            try:
-                self.file_handle.close()
-            except Exception as e:
-                self.logger.error(f"Failed to close {self.stream_type} log: {e}")
+            self._stopped = True
+            if self.file_handle:
+                try:
+                    self.file_handle.close()
+                except Exception as e:
+                    # Ignore errors during cleanup
+                    pass
+                self.file_handle = None
 
     def __getattr__(self, name):
         """Delegate all other attributes to the original stream"""
@@ -166,37 +192,34 @@ def setup_global_console_logging():
 
     setup_global_console_logging._initialized = True
 
-    # Initialize console capture
-    capture = initialize_console_capture()
-
-    # Setup standard Python logging
+    # Setup standard Python logging first (but without file handler to avoid duplicates)
     import logging
     from pathlib import Path
 
     logs_dir = Path("logs")
     logs_dir.mkdir(exist_ok=True)
 
-    # Configure root logger
+    # Configure root logger for console output only
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
 
-    # Create file handler for Python logs (also use std_log.log for consistency)
-    python_log = logs_dir / "std_log.log"
-    file_handler = logging.FileHandler(python_log, mode='a', encoding='utf-8')
-    file_handler.setLevel(logging.DEBUG)
+    # Only add console handler if not already present
+    if not any(isinstance(h, logging.StreamHandler) for h in root_logger.handlers):
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        console_handler.setFormatter(formatter)
+        root_logger.addHandler(console_handler)
 
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    file_handler.setFormatter(formatter)
-
-    # Add handler to root logger
-    root_logger.addHandler(file_handler)
+    # Initialize console capture (this will handle file logging)
+    capture = initialize_console_capture()
 
     # Log initialization
     logger = logging.getLogger(__name__)
     logger.info("Global console logging initialized")
-    logger.info(f"Consolidated std log file: {python_log}")
+    logger.info(f"Consolidated std log file: {capture.std_log}")
     logger.info(f"Console capture active: {capture.std_log}")
 
     return capture
