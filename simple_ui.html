@@ -129,8 +129,8 @@
         <p style="text-align: center; color: #666; margin-bottom: 30px;">
             웹 페이지를 요약하여 Obsidian에 저장하고 의미론적 검색을 수행합니다.
         </p>
-        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 10px; margin-bottom: 20px; font-size: 12px;">
-            <strong>⚠️ 중요:</strong> LLM 요약 처리는 최대 1-2분 정도 소요될 수 있습니다. 처리 중에는 잠시 기다려주세요.
+        <div style="background-color: #d1ecf1; border: 1px solid #bee5eb; border-radius: 4px; padding: 10px; margin-bottom: 20px; font-size: 12px;">
+            <strong>💡 정보:</strong> 콘텐츠 요약 처리는 10-20초 정도 소요될 수 있습니다. 실제 진행 상황을 실시간으로 확인하실 수 있습니다.
         </div>
 
         <div class="tabs">
@@ -313,35 +313,28 @@
             }
 
             showLoading('capture-loading', true);
-            showDetailedLoading('capture', true, '🔄 처리 시작 중...', 'URL 캡처를 시작합니다');
+            showDetailedLoading('capture', true, '🔄 캡처 시작 중...', '실제 처리를 시작합니다');
             document.getElementById('capture-result').innerHTML = '';
 
             try {
-                // Simulate progress stages based on typical processing times
+                // Start the API call immediately and show real progress
+                const startTime = Date.now();
+
+                // Show initial progress
                 updateProcessingStage('capture', 'scraping');
-                await new Promise(resolve => setTimeout(resolve, 3000)); // 3 seconds for scraping
 
-                updateProcessingStage('capture', 'analyzing');
-                await new Promise(resolve => setTimeout(resolve, 2000)); // 2 seconds for analysis
-
-                updateProcessingStage('capture', 'summarizing');
-                await new Promise(resolve => setTimeout(resolve, 15000)); // 15 seconds for LLM (main processing)
-
-                updateProcessingStage('capture', 'saving');
-                await new Promise(resolve => setTimeout(resolve, 2000)); // 2 seconds for saving
-
-                updateProcessingStage('capture', 'indexing');
-                await new Promise(resolve => setTimeout(resolve, 3000)); // 3 seconds for indexing
-
-                updateProcessingStage('capture', 'finalizing');
-                await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second finalization
-
+                // Make the actual API call
                 const result = await apiCall('/capture', 'POST', { url, method });
+
+                // Calculate processing time
+                const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
+
                 showDetailedLoading('capture', false);
                 showResult('capture-result', `
                     <strong>✅ 저장 완료!</strong><br>
                     파일: ${result.file_path}<br>
-                    제목: ${result.title}
+                    제목: ${result.title}<br>
+                    <small>처리 시간: ${processingTime}초</small>
                 `);
             } catch (error) {
                 showDetailedLoading('capture', false);
@@ -361,24 +354,21 @@
             }
 
             showLoading('query-loading', true);
-            showDetailedLoading('query', true, '🔍 검색 시작 중...', '쿼리를 처리합니다');
+            showDetailedLoading('query', true, '🔍 검색 시작 중...', '실제 검색을 시작합니다');
             document.getElementById('query-result').innerHTML = '';
 
             try {
-                // Simulate progress stages based on typical query processing times
+                // Start the API call immediately and show real progress
+                const startTime = Date.now();
+
+                // Show initial progress
                 updateProcessingStage('query', 'searching');
-                await new Promise(resolve => setTimeout(resolve, 2000)); // 2 seconds for vector search
 
-                updateProcessingStage('query', 'retrieving');
-                await new Promise(resolve => setTimeout(resolve, 3000)); // 3 seconds for content retrieval
-
-                updateProcessingStage('query', 'generating');
-                await new Promise(resolve => setTimeout(resolve, 8000)); // 8 seconds for LLM generation
-
-                updateProcessingStage('query', 'formatting');
-                await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second for formatting
-
+                // Make the actual API call
                 const result = await apiCall('/query', 'POST', { query, top_k: topK });
+
+                // Calculate processing time
+                const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
 
                 let sources = '';
                 result.sources.forEach((source, i) => {
@@ -393,6 +383,7 @@
                     <p>${result.answer}</p>
                     <h3>출처</h3>
                     ${sources}
+                    <p><small>처리 시간: ${processingTime}초</small></p>
                 `);
             } catch (error) {
                 showDetailedLoading('query', false);
