@@ -89,8 +89,16 @@ def setup_logging(log_level: str = "DEBUG", log_file: str = "knowledge_api.log")
     logging.getLogger("llama_index.core.indices.utils").setLevel(logging.WARNING)
     logging.getLogger("llama_index.core.response_synthesizers.refine").setLevel(logging.WARNING)
     logging.getLogger("llama_index_instrumentation.dispatcher").setLevel(logging.WARNING)
-    logging.getLogger("torch._dynamo").setLevel(logging.WARNING)
-    logging.getLogger("torch._subclasses.fake_tensor").setLevel(logging.WARNING)
+
+    # Filter out TorchDynamo and PyTorch debug messages
+    logging.getLogger("torch._dynamo").setLevel(logging.ERROR)
+    logging.getLogger("torch._dynamo.eval_frame").setLevel(logging.ERROR)
+    logging.getLogger("torch._dynamo.utils").setLevel(logging.ERROR)
+    logging.getLogger("torch._subclasses.fake_tensor").setLevel(logging.ERROR)
+
+    # Filter out passlib debug messages
+    logging.getLogger("passlib.utils.compat").setLevel(logging.WARNING)
+    logging.getLogger("passlib.registry").setLevel(logging.WARNING)
 
     # Force configuration of our application loggers
     app_loggers = ["__main__", "src.scraper", "src.summarizer", "src.obsidian_writer", "src.retriever", "src.custom_llm"]

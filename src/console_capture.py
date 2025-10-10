@@ -188,7 +188,10 @@ def setup_global_console_logging():
     """
     # Only setup once
     if hasattr(setup_global_console_logging, '_initialized'):
-        return
+        # Return existing capture instance if available
+        if hasattr(setup_global_console_logging, '_capture_instance'):
+            return setup_global_console_logging._capture_instance
+        return None
 
     setup_global_console_logging._initialized = True
 
@@ -215,6 +218,9 @@ def setup_global_console_logging():
 
     # Initialize console capture (this will handle file logging)
     capture = initialize_console_capture()
+
+    # Store the capture instance for reuse
+    setup_global_console_logging._capture_instance = capture
 
     # Log initialization
     logger = logging.getLogger(__name__)

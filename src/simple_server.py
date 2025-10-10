@@ -14,13 +14,18 @@ from pathlib import Path
 # Setup logging to capture all console output
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Initialize comprehensive console capture FIRST
-from src.console_capture import setup_global_console_logging
-console_capture = setup_global_console_logging()
-
-# Initialize standard logging
+# Initialize standard logging first
 from src.logging_config import setup_logging
 setup_logging(log_file="simple_ui.log")
+
+# Initialize console capture if not already initialized
+from src.console_capture import setup_global_console_logging
+try:
+    console_capture = setup_global_console_logging()
+except Exception as e:
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Console capture already initialized or failed: {e}")
+    console_capture = None
 logger = logging.getLogger(__name__)
 
 PORT = 7860
