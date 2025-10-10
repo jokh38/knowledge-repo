@@ -186,49 +186,78 @@ def setup_global_console_logging():
     Setup comprehensive console logging that captures all output from all entry points.
     This function should be called at the very beginning of any Python script.
     """
-    # Only setup once
+    import os
+    import fcntl
+
+    # Use file-based locking to prevent multiple initializations across processes
+    lock_file = Path("logs/.console_capture_lock")
+    lock_file.parent.mkdir(exist_ok=True)
+
+    # Only setup once across all processes
     if hasattr(setup_global_console_logging, '_initialized'):
         # Return existing capture instance if available
         if hasattr(setup_global_console_logging, '_capture_instance'):
             return setup_global_console_logging._capture_instance
         return None
 
-    setup_global_console_logging._initialized = True
+    # Try to acquire lock
+    try:
+        lock_fd = open(lock_file, 'w')
+        fcntl.flock(lock_fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
 
-    # Setup standard Python logging first (but without file handler to avoid duplicates)
-    import logging
-    from pathlib import Path
+        # Check if already initialized by another process
+        if hasattr(setup_global_console_logging, '_initialized'):
+            lock_fd.close()
+            if hasattr(setup_global_console_logging, '_capture_instance'):
+                return setup_global_console_logging._capture_instance
+            return None
 
-    logs_dir = Path("logs")
-    logs_dir.mkdir(exist_ok=True)
+        setup_global_console_logging._initialized = True
 
-    # Configure root logger for console output only
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
+        # Setup standard Python logging first (but without file handler to avoid duplicates)
+        import logging
+        from pathlib import Path
 
-    # Only add console handler if not already present
-    if not any(isinstance(h, logging.StreamHandler) for h in root_logger.handlers):
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
-        console_handler.setFormatter(formatter)
-        root_logger.addHandler(console_handler)
+        logs_dir = Path("logs")
+        logs_dir.mkdir(exist_ok=True)
 
-    # Initialize console capture (this will handle file logging)
-    capture = initialize_console_capture()
+        # Configure root logger for console output only
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.DEBUG)
 
-    # Store the capture instance for reuse
-    setup_global_console_logging._capture_instance = capture
+        # Only add console handler if not already present
+        if not any(isinstance(h, logging.StreamHandler) for h in root_logger.handlers):
+            console_handler = logging.StreamHandler()
+            console_handler.setLevel(logging.DEBUG)
+            formatter = logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            )
+            console_handler.setFormatter(formatter)
+            root_logger.addHandler(console_handler)
 
-    # Log initialization
-    logger = logging.getLogger(__name__)
-    logger.info("Global console logging initialized")
-    logger.info(f"Consolidated std log file: {capture.std_log}")
-    logger.info(f"Console capture active: {capture.std_log}")
+        # Initialize console capture (this will handle file logging)
+        capture = initialize_console_capture()
 
-    return capture
+        # Store the capture instance for reuse
+        setup_global_console_logging._capture_instance = capture
+
+        # Log initialization
+        logger = logging.getLogger(__name__)
+        logger.info("Global console logging initialized")
+        logger.info(f"Consolidated std log file: {capture.std_log}")
+        logger.info(f"Console capture active: {capture.std_log}")
+
+        # Release lock
+        fcntl.flock(lock_fd.fileno(), fcntl.LOCK_UN)
+        lock_fd.close()
+
+        return capture
+
+    except (IOError, OSError):
+        # Lock is held by another process, wait and return existing instance
+        if hasattr(setup_global_console_logging, '_capture_instance'):
+            return setup_global_console_logging._capture_instance
+        return None
 
 
 if __name__ == "__main__":

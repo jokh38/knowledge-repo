@@ -42,6 +42,30 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
         super().end_headers()
 
+    def do_GET(self):
+        # Handle favicon.ico requests specifically
+        if self.path == '/favicon.ico':
+            favicon_path = DIRECTORY / 'favicon.ico'
+            if favicon_path.exists():
+                self.send_response(200)
+                self.send_header('Content-Type', 'image/x-icon')
+                self.send_header('Content-Length', str(favicon_path.stat().st_size))
+                self.end_headers()
+                with open(favicon_path, 'rb') as f:
+                    self.wfile.write(f.read())
+                return
+            else:
+                self.send_error(404, "File Not Found")
+                return
+
+        # Handle all other GET requests normally
+        super().do_GET()
+
+    def log_message(self, format, *args):
+        # Suppress logging for favicon requests to reduce noise
+        if '/favicon.ico' not in args[0]:
+            super().log_message(format, *args)
+
 def start_server():
     """Start the simple HTTP server"""
     import socket

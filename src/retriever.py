@@ -51,6 +51,10 @@ else:
 # Embedding Model - prioritize local embeddings
 logger.debug(f"[DEBUG] Initializing embedding model")
 try:
+    # Suppress HuggingFace API warnings and debug logs
+    import transformers
+    transformers.logging.set_verbosity_error()
+
     # Get local model path from environment or use default
     local_model_path = os.getenv("EMBEDDING_MODEL_PATH")
     default_model_name = "all-MiniLM-L6-v2"
@@ -64,6 +68,10 @@ try:
         )
     else:
         logger.debug(f"[DEBUG] Local model not found or not specified, using model name: {default_model_name}")
+        # Suppress urllib3 debug logs for HuggingFace API calls
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
         Settings.embed_model = HuggingFaceEmbedding(
             model_name=default_model_name,
             embed_batch_size=1  # Process one at a time to reduce memory pressure

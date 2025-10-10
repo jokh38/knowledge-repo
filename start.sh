@@ -47,6 +47,43 @@ if [ ! -f ".env" ]; then
     exit 1
 fi
 
+# Function to clear a specific port
+clear_port() {
+    local port=$1
+    local service_name=$2
+
+    print_status "Checking port $port for $service_name..."
+
+    # Find processes using the port
+    local pids=$(lsof -ti:$port 2>/dev/null || true)
+
+    if [ -n "$pids" ]; then
+        print_warning "Port $port is in use. Terminating processes..."
+        for pid in $pids; do
+            if kill -0 "$pid" 2>/dev/null; then
+                print_status "Killing process $pid using port $port"
+                kill -TERM "$pid" 2>/dev/null || true
+                sleep 1
+                # Force kill if still running
+                if kill -0 "$pid" 2>/dev/null; then
+                    print_warning "Force killing process $pid"
+                    kill -KILL "$pid" 2>/dev/null || true
+                fi
+            fi
+        done
+        sleep 2
+        # Verify port is clear
+        local remaining_pids=$(lsof -ti:$port 2>/dev/null || true)
+        if [ -n "$remaining_pids" ]; then
+            print_error "Failed to clear port $port. Processes still running: $remaining_pids"
+        else
+            print_status "Port $port cleared successfully"
+        fi
+    else
+        print_status "Port $port is available"
+    fi
+}
+
 # Cleanup existing services before starting new ones
 print_status "Cleaning up existing services..."
 if [ -f "./cleanup.sh" ]; then
@@ -57,6 +94,10 @@ else
     pkill -f "python3.*\(main\|ui\|simple_server\)\.py" 2>/dev/null || true
     sleep 2
 fi
+
+# Clear specific ports
+clear_port 8000 "API Server"
+clear_port 7860 "Simple Web UI"
 
 # Create necessary directories
 print_status "Creating necessary directories..."
