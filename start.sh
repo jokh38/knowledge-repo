@@ -36,7 +36,7 @@ conda activate krepo
 
 # Check if requirements are installed
 print_status "Checking dependencies..."
-if ! python3 -c "import fastapi" 2>/dev/null; then
+if ! python -c "import fastapi" 2>/dev/null; then
     print_status "Installing dependencies..."
     pip install -r requirements.txt
 fi
@@ -64,7 +64,7 @@ mkdir -p logs
 mkdir -p chroma_db
 
 # Check if Obsidian vault path exists
-VAULT_PATH=$(python3 -c "from dotenv import load_dotenv; import os; load_dotenv(); print(os.getenv('OBSIDIAN_VAULT_PATH', ''))")
+VAULT_PATH=$(python -c "from dotenv import load_dotenv; import os; load_dotenv(); print(os.getenv('OBSIDIAN_VAULT_PATH', ''))")
 if [ -z "$VAULT_PATH" ]; then
     print_warning "OBSIDIAN_VAULT_PATH not set in .env file"
 elif [ ! -d "$VAULT_PATH" ]; then
@@ -84,7 +84,7 @@ echo "Shell script logging to: $CONSOLE_LOG" >> "$CONSOLE_LOG"
 
 # Start API server in background with output redirection
 print_status "Starting API server on port 8000..."
-python3 run_with_env.py main.py 2>&1 | tee -a "$CONSOLE_LOG" &
+python run_with_env.py main.py 2>&1 | tee -a "$CONSOLE_LOG" &
 API_PID=$!
 
 # Wait a moment for API server to start
@@ -92,7 +92,7 @@ sleep 3
 
 # Start Simple Web UI (instead of problematic gradio)
 print_status "Starting Simple Web UI on port 7860..."
-python3 src/simple_server.py 2>&1 | tee -a "$CONSOLE_LOG" &
+python src/simple_server.py 2>&1 | tee -a "$CONSOLE_LOG" &
 UI_PID=$!
 
 # Function to cleanup on exit
