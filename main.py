@@ -136,7 +136,7 @@ async def health_check():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/capture", response_model=CaptureResponse)
-async def capture_url(request: CaptureRequest, token: str = Depends(verify_token)):
+async def capture_url(request: CaptureRequest):
     """Capture URL and save to Obsidian with auto-indexing"""
     start_time = time.time()
 
@@ -269,7 +269,7 @@ async def query_knowledge(request: QueryRequest, token: Optional[str] = Depends(
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/reindex")
-async def reindex_vault(request: ReindexRequest, token: str = Depends(verify_token)):
+async def reindex_vault(request: ReindexRequest):
     """Reindex the entire vault"""
     try:
         log_api_call("/reindex", {"force": request.force})
@@ -282,7 +282,7 @@ async def reindex_vault(request: ReindexRequest, token: str = Depends(verify_tok
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/stats")
-async def get_stats(token: str = Depends(verify_token)):
+async def get_stats():
     """Get system statistics"""
     try:
         index_stats = retriever.get_index_stats()
