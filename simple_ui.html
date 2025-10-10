@@ -304,27 +304,47 @@
         }
 
         async function captureUrl() {
-            const url = document.getElementById('url').value;
+            const url = document.getElementById('url').value.trim();
             const method = document.getElementById('method').value;
 
+            // Debug logging
+            console.log('captureUrl called with:', { url, method });
+            console.log('URL input element:', document.getElementById('url'));
+            console.log('URL input value:', document.getElementById('url').value);
+
             if (!url) {
-                showResult('capture-result', 'URL을 입력하세요.', true);
+                showResult('capture-result', 'URL을 입력하세요.<br>예: https://example.com/article', true);
+                return;
+            }
+
+            // Basic URL validation
+            try {
+                new URL(url);
+            } catch (e) {
+                showResult('capture-result', '유효한 URL을 입력하세요.<br>예: https://example.com/article', true);
                 return;
             }
 
             showLoading('capture-loading', true);
-            showDetailedLoading('capture', true, '🔄 캡처 시작 중...', '실제 처리를 시작합니다');
+            showDetailedLoading('capture', true, '🔄 캡처 시작 중...', `URL: ${url.substring(0, 50)}${url.length > 50 ? '...' : ''}`);
             document.getElementById('capture-result').innerHTML = '';
 
             try {
                 // Start the API call immediately and show real progress
                 const startTime = Date.now();
 
+                // Debug: Show what URL is being sent
+                console.log('Sending API call with:', { url, method });
+                showResult('capture-result', `캡처 시작: ${url}<br>잠시만 기다려주세요...`);
+
                 // Show initial progress
                 updateProcessingStage('capture', 'scraping');
 
                 // Make the actual API call
                 const result = await apiCall('/capture', 'POST', { url, method });
+
+                // Debug: Log the result
+                console.log('API response:', result);
 
                 // Calculate processing time
                 const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
