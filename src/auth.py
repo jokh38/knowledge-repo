@@ -27,12 +27,13 @@ class TokenData:
     username: Optional[str] = None
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
-    """Simple token verification"""
+    """JWT token verification - unified authentication method"""
     token = credentials.credentials
+
+    # Check for fallback simple token mode for backward compatibility
     expected_token = os.getenv("API_TOKEN")
-    
-    # If API_TOKEN is set, use simple token verification
-    if expected_token:
+    if expected_token and os.getenv("ENVIRONMENT") == "development":
+        logger.warning("Using simple token verification in development mode. Consider switching to JWT.")
         if token != expected_token:
             logger.warning(f"Invalid token attempt: {token[:10]}...")
             raise HTTPException(
@@ -40,9 +41,9 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) 
                 detail="Invalid token",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        return token
-    
-    # Otherwise, use JWT verification
+        return "development_user"
+
+    # Use JWT verification (primary method)
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
@@ -53,8 +54,15 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) 
                 headers={"WWW-Authenticate": "Bearer"},
             )
         return username
-    except jwt.PyJWTError:
-        logger.warning(f"JWT decode failed for token: {token[:10]}...")
+    except jwt.ExpiredSignatureError:
+        logger.warning(f"Token expired: {token[:10]}...")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except jwt.InvalidTokenError:
+        logger.warning(f"Invalid JWT token: {token[:10]}...")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
@@ -102,13 +110,31 @@ def authenticate_user(username: str, password: str) -> bool:
 
     return verify_password(password, users[username])
 
-def get_current_user(token: str = Depends(verify_token)):
+def get_current_user(token: str = Depends(verify_token)) -> dict:
     """Get current authenticated user"""
     # In a real implementation, you would fetch user details from database
-    return {"username": token}
+    return {"username": token, "authenticated": True}
 
-def optional_auth(credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))):
+def optional_auth(credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))) -> Optional[dict]:
     """Optional authentication - doesn't raise error if no token provided"""
     if credentials is None:
         return None
-    return verify_token(credentials)
+    try:
+        username = verify_token(credentials)
+        return {"username": username, "authenticated": True}
+    except HTTPException:
+        return {"username": None, "authenticated": False}
+
+def generate_api_token(username: str = "api_user") -> str:
+    """Generate a JWT token for API usage"""
+    data = {"sub": username}
+    return create_access_token(data)
+
+def validate_token_for_usage(token: str) -> dict:
+    """Validate token and return user information"""
+    try:
+        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+        username = verify_token(credentials)
+        return {"username": username, "valid": True}
+    except HTTPException:
+        return {"username": None, "valid": False}

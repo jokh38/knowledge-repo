@@ -51,20 +51,21 @@ else:
 # Embedding Model - prioritize local embeddings
 logger.debug(f"[DEBUG] Initializing embedding model")
 try:
-    # Use the local cached model path to avoid downloads
-    local_model_path = "/home/jokh38/.cache/llama_index/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/c9745ed1d9f207416be6d2e6f8de32d1f16199bf"
+    # Get local model path from environment or use default
+    local_model_path = os.getenv("EMBEDDING_MODEL_PATH")
+    default_model_name = "all-MiniLM-L6-v2"
 
-    # Check if local model exists, otherwise fall back to model name
-    if os.path.exists(local_model_path):
+    # Check if local model path is provided and exists, otherwise fall back to model name
+    if local_model_path and os.path.exists(local_model_path):
         logger.debug(f"[DEBUG] Using local embedding model at: {local_model_path}")
         Settings.embed_model = HuggingFaceEmbedding(
             model_name=local_model_path,
             embed_batch_size=1  # Process one at a time to reduce memory pressure
         )
     else:
-        logger.debug(f"[DEBUG] Local model not found, using model name: all-MiniLM-L6-v2")
+        logger.debug(f"[DEBUG] Local model not found or not specified, using model name: {default_model_name}")
         Settings.embed_model = HuggingFaceEmbedding(
-            model_name="all-MiniLM-L6-v2",
+            model_name=default_model_name,
             embed_batch_size=1  # Process one at a time to reduce memory pressure
         )
     logger.debug(f"[DEBUG] HuggingFace embedding model initialized successfully")

@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, ValidationError
 from dotenv import load_dotenv
 import time
 import os
@@ -10,6 +10,8 @@ import sys
 import logging
 import warnings
 from typing import Optional
+import requests
+from requests.exceptions import ConnectionError, Timeout, HTTPError
 
 # Add project root to Python path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -26,7 +28,7 @@ load_dotenv()
 
 # Import modules AFTER loading environment variables
 from src import scraper, summarizer, obsidian_writer, retriever
-from src.auth import verify_token, optional_auth
+from src.auth import verify_token, optional_auth, generate_api_token
 from src.logging_config import setup_logging, log_request_info, log_response_info, log_error, log_api_call
 
 # Setup logging
@@ -135,9 +137,12 @@ async def health_check():
             vault_path=vault_path,
             chroma_db=chroma_db
         )
+    except (ValueError, KeyError) as e:
+        log_error(e, "Health check failed due to configuration error")
+        raise HTTPException(status_code=503, detail=f"Service configuration error: {str(e)}")
     except Exception as e:
-        log_error(e, "Health check failed")
-        raise HTTPException(status_code=500, detail=str(e))
+        log_error(e, "Health check failed unexpectedly")
+        raise HTTPException(status_code=503, detail="Service unavailable")
 
 @app.post("/capture", response_model=CaptureResponse)
 async def capture_url(request: CaptureRequest):
@@ -229,15 +234,28 @@ async def capture_url(request: CaptureRequest):
             message="콘텐츠가 성공적으로 저장되었습니다."
         )
 
+    except (ConnectionError, Timeout) as e:
+        duration = time.time() - start_time
+        logger.error(f"Network error during capture after {duration:.2f}s: {str(e)}")
+        log_api_call("/capture", {"url": str(request.url)}, False, f"Network error: {str(e)}")
+        raise HTTPException(status_code=503, detail="External service unavailable. Please try again later.")
+    except ValidationError as e:
+        duration = time.time() - start_time
+        logger.error(f"Validation error during capture after {duration:.2f}s: {str(e)}")
+        log_api_call("/capture", {"url": str(request.url)}, False, f"Validation error: {str(e)}")
+        raise HTTPException(status_code=422, detail=f"Invalid request format: {str(e)}")
+    except (ValueError, KeyError) as e:
+        duration = time.time() - start_time
+        logger.error(f"Data error during capture after {duration:.2f}s: {str(e)}")
+        log_api_call("/capture", {"url": str(request.url)}, False, f"Data error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Invalid data provided: {str(e)}")
     except Exception as e:
         duration = time.time() - start_time
-        logger.debug(f"[DEBUG] Capture failed after {duration:.2f}s")
-        log_error(e, f"Capture failed after {duration:.2f}s")
-        logger.debug(f"[DEBUG] Capture error details: {type(e).__name__}: {str(e)}")
+        logger.error(f"Unexpected error during capture after {duration:.2f}s: {type(e).__name__}: {str(e)}")
         import traceback
         logger.debug(f"[DEBUG] Full traceback: {traceback.format_exc()}")
-        log_api_call("/capture", {"url": str(request.url)}, False, str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        log_api_call("/capture", {"url": str(request.url)}, False, "Internal server error")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred. Please try again.")
 
 @app.post("/query", response_model=QueryResponse)
 async def query_knowledge(request: QueryRequest, token: Optional[str] = Depends(optional_auth)):
@@ -262,15 +280,28 @@ async def query_knowledge(request: QueryRequest, token: Optional[str] = Depends(
         log_api_call("/query", {"query": request.query}, True, None)
 
         return QueryResponse(**result)
+    except (ConnectionError, Timeout) as e:
+        duration = time.time() - start_time
+        logger.error(f"Network error during query after {duration:.2f}s: {str(e)}")
+        log_api_call("/query", {"query": request.query}, False, f"Network error: {str(e)}")
+        raise HTTPException(status_code=503, detail="Knowledge base service unavailable. Please try again later.")
+    except (ValueError, KeyError) as e:
+        duration = time.time() - start_time
+        logger.error(f"Data error during query after {duration:.2f}s: {str(e)}")
+        log_api_call("/query", {"query": request.query}, False, f"Data error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Invalid query or data format: {str(e)}")
+    except ValidationError as e:
+        duration = time.time() - start_time
+        logger.error(f"Validation error during query after {duration:.2f}s: {str(e)}")
+        log_api_call("/query", {"query": request.query}, False, f"Validation error: {str(e)}")
+        raise HTTPException(status_code=422, detail=f"Invalid request format: {str(e)}")
     except Exception as e:
         duration = time.time() - start_time
-        logger.debug(f"[DEBUG] Query failed after {duration:.2f}s")
-        log_error(e, f"Query failed after {duration:.2f}s")
-        logger.debug(f"[DEBUG] Query error details: {type(e).__name__}: {str(e)}")
+        logger.error(f"Unexpected error during query after {duration:.2f}s: {type(e).__name__}: {str(e)}")
         import traceback
         logger.debug(f"[DEBUG] Full traceback: {traceback.format_exc()}")
-        log_api_call("/query", {"query": request.query}, False, str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        log_api_call("/query", {"query": request.query}, False, "Internal server error")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred. Please try again.")
 
 @app.post("/reindex")
 async def reindex_vault(request: ReindexRequest):
@@ -280,10 +311,18 @@ async def reindex_vault(request: ReindexRequest):
         retriever.index_vault(force_reindex=request.force)
         log_api_call("/reindex", {"force": request.force}, True, None)
         return {"message": "Reindexing complete"}
+    except (ConnectionError, Timeout) as e:
+        log_error(e, "Reindexing failed due to network error")
+        log_api_call("/reindex", {"force": request.force}, False, f"Network error: {str(e)}")
+        raise HTTPException(status_code=503, detail="Database service unavailable. Please try again later.")
+    except (ValueError, KeyError) as e:
+        log_error(e, "Reindexing failed due to data error")
+        log_api_call("/reindex", {"force": request.force}, False, f"Data error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Invalid data format during reindexing: {str(e)}")
     except Exception as e:
-        log_error(e, "Reindexing failed")
-        log_api_call("/reindex", {"force": request.force}, False, str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        log_error(e, "Reindexing failed unexpectedly")
+        log_api_call("/reindex", {"force": request.force}, False, "Internal server error")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred during reindexing. Please try again.")
 
 @app.get("/stats")
 async def get_stats():
@@ -296,9 +335,30 @@ async def get_stats():
             "chroma_db_path": os.getenv("CHROMA_DB_PATH"),
             "ollama_base_url": os.getenv("OLLAMA_BASE_URL")
         }
+    except (ConnectionError, Timeout) as e:
+        log_error(e, "Stats retrieval failed due to network error")
+        raise HTTPException(status_code=503, detail="Database service unavailable. Please try again later.")
+    except (ValueError, KeyError) as e:
+        log_error(e, "Stats retrieval failed due to data error")
+        raise HTTPException(status_code=400, detail=f"Data format error: {str(e)}")
     except Exception as e:
-        log_error(e, "Stats retrieval failed")
-        raise HTTPException(status_code=500, detail=str(e))
+        log_error(e, "Stats retrieval failed unexpectedly")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred while retrieving statistics.")
+
+@app.post("/token")
+async def generate_token():
+    """Generate a JWT token for API access"""
+    try:
+        # Generate token for API usage
+        token = generate_api_token("api_user")
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "expires_in": os.getenv("JWT_EXPIRE_MINUTES", 30)
+        }
+    except Exception as e:
+        log_error(e, "Token generation failed")
+        raise HTTPException(status_code=500, detail="Failed to generate token")
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
